@@ -36,6 +36,8 @@ import ij.plugin.filter.PlugInFilter;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 
+import coordinates.*;
+
 /**
  * Plugin for DNA fibers extraction and unfolding.
  *
@@ -68,6 +70,14 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	public void run(ImageProcessor ip) {
 		if (this.showAndCheckDialog()) {
 			// TODO processing
+			// Global needs: a. element-wise multiplication
+			// #1 Pre-process image (sum all images, auto threshold, morphological opening and skeletonization)
+			// #2 Populate Hough space (random selection of N couples of foreground pixels and creation of one point in Hough space; 
+			// needs: a. image space to Hough space coordinates converter, b. coordinates system definition and c. foreground coordinates 
+			// selector)
+			// #3 Select Hough points (search for local maxima in Hough space; needs: a. compute rescale factors --or take into account
+			// anisotropic kernels--, b. point replication on borders of theta axis and c. mean shift of points with specified bandwidth)
+			// #4 Build segments (detect pixels along lines and break them into segments; needs: a. foreground coordinates selector)
 		}
 	}
 
@@ -101,6 +111,36 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		// TODO check parameters
 
 		return notCanceled;
+	}
+	
+	
+	/**
+	 * Compute the Hough representation of the line going through input image points.
+	 * 
+	 * Two image points are enough to build a line and express this line in the Hough space.
+	 * 
+	 * @param p1 First input point.
+	 * @param p2 Second input point.
+	 * @return The Hough point corresponding to the line going through input points.
+	 */
+	public HoughPoint convertImagePointsToHoughPoint(ImagePoint p1, ImagePoint p2) {
+		HoughPoint p = new HoughPoint();
+		
+		int a = p1.x - p2.x;
+		int b = p1.y - p2.y;
+		
+		if (a == 0)
+			p.setLocation(0.0, p1.x);
+		else if (b == 0)
+			p.setLocation(-Math.PI/2.0, p1.x);
+		else { // a != 0 && b != 0
+			double theta = -Math.atan((double)a/(double)b);
+			double cosTheta = Math.cos(theta);
+			double sinTheta = Math.sin(theta);
+			p.setLocation(theta, (p1.x*cosTheta + p1.y*sinTheta + p2.x*cosTheta + p2.y*sinTheta)/2.0);			
+		}
+		
+		return p;
 	}
 
 	/**
