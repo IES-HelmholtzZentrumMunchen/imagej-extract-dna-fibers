@@ -17,26 +17,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-import java.awt.geom.Point2D;
-import java.lang.reflect.Array;
-import java.util.Arrays;
-import java.util.Vector;
-
-import ij.CompositeImage;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
-import ij.gui.Roi;
-import ij.process.FloatPolygon;
+import ij.WindowManager;
 import ij.gui.GenericDialog;
-import ij.gui.Line;
-import ij.gui.Plot;
-import ij.gui.PointRoi;
 import ij.plugin.filter.PlugInFilter;
-import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
-
-import coordinates.*;
+import ij.plugin.ZProjector;
+import ij.plugin.filter.GaussianBlur;
+import ij.plugin.filter.Binary;
 
 /**
  * Plugin for DNA fibers extraction and unfolding.
@@ -69,16 +59,53 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	@Override
 	public void run(ImageProcessor ip) {
 		if (this.showAndCheckDialog()) {
-			// TODO processing
-			// Global needs: a. element-wise multiplication
-			// #1 Pre-process image (sum all images, auto threshold, morphological opening and skeletonization)
-			// #2 Populate Hough space (random selection of N couples of foreground pixels and creation of one point in Hough space; 
+			// TODO Global needs: a. element-wise multiplication
+			// TODO #1 Pre-process image (sum all images, auto threshold, morphological opening and skeletonization)
+			// TODO #2 Populate Hough space (random selection of N couples of foreground pixels and creation of one point in Hough space; 
 			// needs: a. image space to Hough space coordinates converter, b. coordinates system definition and c. foreground coordinates 
 			// selector)
-			// #3 Select Hough points (search for local maxima in Hough space; needs: a. compute rescale factors --or take into account
+			// TODO #3 Select Hough points (search for local maxima in Hough space; needs: a. compute rescale factors --or take into account
 			// anisotropic kernels--, b. point replication on borders of theta axis and c. mean shift of points with specified bandwidth)
-			// #4 Build segments (detect pixels along lines and break them into segments; needs: a. foreground coordinates selector)
+			// TODO #4 Build segments (detect pixels along lines and break them into segments; needs: a. foreground coordinates selector)
 		}
+	}
+	
+	/**
+	 * Prepare input image for DNA fibers extraction by extracting skeletons.
+	 * @param input Input image.
+	 * @return A binary image of skeletons of input image.
+	 */
+	public static ImagePlus extractSkeletons(ImagePlus input) {
+		// Max-project the selected channels
+		ZProjector projector = new ZProjector();
+		projector.setImage(input);
+		projector.setMethod(ZProjector.MAX_METHOD);
+		projector.setStartSlice(1);
+		projector.setStopSlice(2);
+		projector.doProjection();
+		ImagePlus tmp = projector.getProjection();
+		
+		// Denoise the projected image
+		GaussianBlur blur = new GaussianBlur();
+		blur.blurGaussian(tmp.getProcessor(), 1.5);
+		
+		// Compute Laplacian
+		IJ.run(tmp, "FeatureJ Laplacian", "compute smoothing=1.0");
+		tmp = WindowManager.getImage(tmp.getTitle() +" Laplacian");
+
+		// Threshold Laplacian
+		tmp.getProcessor().setThreshold(tmp.getProcessor().getMin(), -1, ImageProcessor.BLACK_AND_WHITE_LUT);
+		IJ.run(tmp, "Make Binary", "");
+
+		// Clean the threshold result
+		IJ.run(tmp, "Gray Morphology", "radius=1 type=circle operator=open");
+		
+		// Skeletonize
+		Binary skeletizator = new Binary();
+		skeletizator.setup("skel", tmp);
+		skeletizator.run(tmp.getProcessor());
+		
+		return tmp;
 	}
 
 	/**
