@@ -77,4 +77,11 @@ public class HoughPoint extends Point2D {
 		this.theta = x;
 		this.rho = y;
 	}
+	
+	/**
+	 * Convert point to string format.
+	 */
+	public String toString() {
+		return "HoughPoint["+this.theta+","+this.rho+"]";
+	}
 }

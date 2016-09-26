@@ -90,6 +90,13 @@ public class ImagePoint extends Point2D {
 	}
 	
 	/**
+	 * Convert point to string format.
+	 */
+	public String toString() {
+		return "ImagePoint["+this.x+","+this.y+"]";
+	}
+	
+	/**
 	 * Compute the Hough representation of the line going through input image points.
 	 * 
 	 * Two image points are enough to build a line and express this line in the Hough space.
@@ -107,7 +114,7 @@ public class ImagePoint extends Point2D {
 		if (a == 0)
 			p.setLocation(0.0, p1.x);
 		else if (b == 0)
-			p.setLocation(-Math.PI/2.0, p1.x);
+			p.setLocation(-Math.PI/2.0, p1.y);
 		else { // a != 0 && b != 0
 			double theta = -Math.atan((double)a/(double)b);
 			double cosTheta = Math.cos(theta);
