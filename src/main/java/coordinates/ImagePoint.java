@@ -19,6 +19,15 @@
 package coordinates;
 
 import java.awt.geom.Point2D;
+import java.util.List;
+import java.util.Vector;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+import ij.IJ;
+import ij.ImagePlus;
+import ij.process.ImageProcessor;
 
 /**
  * Define the a point in image space.
@@ -133,5 +142,66 @@ public class ImagePoint extends Point2D {
 	 */
 	public HoughPoint convertImagePointsToHoughPoint(ImagePoint p) {
 		return ImagePoint.convertImagePointsToHoughPoint(this, p);
+	}
+	
+	/**
+	 * Get the coordinates of the center point in image.
+	 * @param image Input image.
+	 * @return Center point.
+	 */
+	public static ImagePoint getCenterPointOfImage(ImagePlus image) {
+		return new ImagePoint(image.getWidth()/2, image.getHeight()/2);
+	}
+	
+	/**
+	 * Get a list of point coordinates of foreground pixels in image.
+	 * @param image Input image.
+	 * @param origin Origin of the coordinate system.
+	 * @return A list of points coordinates.
+	 */
+	public static List<ImagePoint> getImageForegroundPoints(ImagePlus image, ImagePoint origin) {
+		ImageProcessor processor = image.getProcessor();
+		
+		// Setup functions to be executed in parallel
+		List<Callable<ImagePoint>> tasks = new Vector<>();
+		
+		for (int y = 0; y < image.getHeight(); y++) {
+			for (int x = 0; x < image.getWidth(); x++) {
+				ImagePoint p = new ImagePoint(x, y);
+				
+				tasks.add(() -> {
+					if (processor.get(p.x, p.y) > 0)
+						return p;
+					else
+						return null;
+				});
+			}
+		}
+		
+		// Run threads in parallel and reduce results
+		Vector<ImagePoint> results = new Vector<>();
+		ExecutorService executor = Executors.newWorkStealingPool();
+		
+	    try {
+	        executor.invokeAll(tasks)
+	        	.stream()
+	        	.map(future -> {
+	        		try {
+	        			return future.get();
+	        		}
+	        		catch (Exception e) {
+	        			throw new IllegalStateException(e);
+	        		}
+	        	})
+	        	.forEach(result -> {
+	        		if (result != null) 
+	        			results.add(result);
+	        	});
+	    }
+	    catch (Exception e) {
+	    	IJ.error("Exception", "An exception occured!\n" + e.getMessage());
+	    }
+		
+		return results;
 	}
 }

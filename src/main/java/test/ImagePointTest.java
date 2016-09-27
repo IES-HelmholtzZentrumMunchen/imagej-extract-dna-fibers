@@ -19,9 +19,17 @@
 package test;
 
 import static org.junit.Assert.*;
+
+import java.util.List;
+import java.util.Random;
+
 import org.junit.Test;
 
 import coordinates.*;
+import ij.ImagePlus;
+import ij.gui.NewImage;
+import ij.process.ImageProcessor;
+
 
 public class ImagePointTest {
 	private final double epsilon = 1e-10;
@@ -60,4 +68,173 @@ public class ImagePointTest {
 		assertEquals(pexp.rho, p.rho, this.epsilon);
 	}
 
+	@Test
+	public void testGetCenterPointOfImage() {
+		ImagePoint p = new ImagePoint(), pexp = new ImagePoint();
+		ImagePlus image;
+		
+		// Square image with odd width and height
+		pexp = new ImagePoint(32,32);
+		image = NewImage.createByteImage("", 65, 65, 1, NewImage.FILL_BLACK);
+		p = ImagePoint.getCenterPointOfImage(image);
+		assertEquals(pexp, p);
+		
+		// Rectangular image with odd width and height
+		pexp = new ImagePoint(8,32);
+		image = NewImage.createByteImage("", 17, 65, 1, NewImage.FILL_BLACK);
+		p = ImagePoint.getCenterPointOfImage(image);
+		assertEquals(pexp, p);
+		
+		// Square image with odd width and even height
+		pexp = new ImagePoint(32,32);
+		image = NewImage.createByteImage("", 65, 64, 1, NewImage.FILL_BLACK);
+		p = ImagePoint.getCenterPointOfImage(image);
+		assertEquals(pexp, p);
+		
+		// Rectangular image with odd width and even height
+		pexp = new ImagePoint(8,32);
+		image = NewImage.createByteImage("", 17, 64, 1, NewImage.FILL_BLACK);
+		p = ImagePoint.getCenterPointOfImage(image);
+		assertEquals(pexp, p);
+		
+		// Square image with even width and odd height
+		pexp = new ImagePoint(32,32);
+		image = NewImage.createByteImage("", 64, 65, 1, NewImage.FILL_BLACK);
+		p = ImagePoint.getCenterPointOfImage(image);
+		assertEquals(pexp, p);
+		
+		// Rectangular image with even width and odd height
+		pexp = new ImagePoint(8,32);
+		image = NewImage.createByteImage("", 16, 65, 1, NewImage.FILL_BLACK);
+		p = ImagePoint.getCenterPointOfImage(image);
+		assertEquals(pexp, p);
+		
+		// Square image with even width and height
+		pexp = new ImagePoint(32,32);
+		image = NewImage.createByteImage("", 64, 64, 1, NewImage.FILL_BLACK);
+		p = ImagePoint.getCenterPointOfImage(image);
+		assertEquals(pexp, p);
+		
+		// Rectangular image with even width and height
+		pexp = new ImagePoint(8,32);
+		image = NewImage.createByteImage("", 16, 64, 1, NewImage.FILL_BLACK);
+		p = ImagePoint.getCenterPointOfImage(image);
+		assertEquals(pexp, p);
+	}
+	
+	@Test
+	public void testGetImageForegroundPoints() {
+		List<ImagePoint> list;
+		ImagePlus image = NewImage.createByteImage("", 5, 5, 1, NewImage.FILL_BLACK);
+		ImageProcessor processor = image.getProcessor();
+		
+		// Top-left origin
+		ImagePoint origin = new ImagePoint();
+		
+		// No points
+		processor.setValue(0); processor.fill();
+		list = ImagePoint.getImageForegroundPoints(image, origin);
+		if (!list.isEmpty()) fail("exptected empty list, got something");
+		
+		// One point only
+		processor.setValue(0); processor.fill();
+		processor.set(2, 2, 1);
+		list = ImagePoint.getImageForegroundPoints(image, origin);
+		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
+		for (ImagePoint p : list) {
+			assertEquals(processor.get(p.x, p.y), 1);
+		}
+		
+		// Few points
+		processor.setValue(0); processor.fill();
+		processor.set(2, 2, 1);
+		processor.set(1, 2, 1);
+		processor.set(3, 2, 1);
+		list = ImagePoint.getImageForegroundPoints(image, origin);
+		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
+		for (ImagePoint p : list) {
+			assertEquals(processor.get(p.x, p.y), 1);
+		}
+		
+		// All points
+		processor.setValue(1); processor.fill();
+		list = ImagePoint.getImageForegroundPoints(image, origin);
+		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
+		for (ImagePoint p : list) {
+			assertEquals(processor.get(p.x, p.y), 1);
+		}
+		
+		// Image center origin
+		origin = ImagePoint.getCenterPointOfImage(image);
+		
+		// No points
+		processor.setValue(0); processor.fill();
+		list = ImagePoint.getImageForegroundPoints(image, origin);
+		if (!list.isEmpty()) fail("exptected empty list, got something");
+		
+		// One point only
+		processor.setValue(0); processor.fill();
+		processor.set(2, 2, 1);
+		list = ImagePoint.getImageForegroundPoints(image, origin);
+		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
+		for (ImagePoint p : list) {
+			assertEquals(processor.get(p.x, p.y), 1);
+		}
+		
+		// Few points
+		processor.setValue(0); processor.fill();
+		processor.set(2, 2, 1);
+		processor.set(1, 2, 1);
+		processor.set(3, 2, 1);
+		list = ImagePoint.getImageForegroundPoints(image, origin);
+		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
+		for (ImagePoint p : list) {
+			assertEquals(processor.get(p.x, p.y), 1);
+		}
+		
+		// All points
+		processor.setValue(1); processor.fill();
+		list = ImagePoint.getImageForegroundPoints(image, origin);
+		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
+		for (ImagePoint p : list) {
+			assertEquals(processor.get(p.x, p.y), 1);
+		}
+		
+		// Random origin
+		Random random = new Random();
+		origin = new ImagePoint(random.nextInt(image.getWidth()), random.nextInt(image.getHeight()));
+		
+		// No points
+		processor.setValue(0); processor.fill();
+		list = ImagePoint.getImageForegroundPoints(image, origin);
+		if (!list.isEmpty()) fail("exptected empty list, got something");
+		
+		// One point only
+		processor.setValue(0); processor.fill();
+		processor.set(2, 2, 1);
+		list = ImagePoint.getImageForegroundPoints(image, origin);
+		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
+		for (ImagePoint p : list) {
+			assertEquals(processor.get(p.x, p.y), 1);
+		}
+		
+		// Few points
+		processor.setValue(0); processor.fill();
+		processor.set(2, 2, 1);
+		processor.set(1, 2, 1);
+		processor.set(3, 2, 1);
+		list = ImagePoint.getImageForegroundPoints(image, origin);
+		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
+		for (ImagePoint p : list) {
+			assertEquals(processor.get(p.x, p.y), 1);
+		}
+		
+		// All points
+		processor.setValue(1); processor.fill();
+		list = ImagePoint.getImageForegroundPoints(image, origin);
+		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
+		for (ImagePoint p : list) {
+			assertEquals(processor.get(p.x, p.y), 1);
+		}
+	}
 }
