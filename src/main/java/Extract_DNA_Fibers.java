@@ -73,15 +73,18 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	/**
 	 * Prepare input image for DNA fibers extraction by extracting skeletons.
 	 * @param input Input image.
+	 * @param startSlice Project from this channel.
+	 * @param endSlice Project until this channel.
+	 * @param thickness Thickness in pixels of the fibers.
 	 * @return A binary image of skeletons of input image.
 	 */
-	public static ImagePlus extractSkeletons(ImagePlus input) {
+	public static ImagePlus extractSkeletons(ImagePlus input, int startSlice, int endSlice, int thickness) {
 		// Max-project the selected channels
 		ZProjector projector = new ZProjector();
 		projector.setImage(input);
 		projector.setMethod(ZProjector.MAX_METHOD);
-		projector.setStartSlice(1);
-		projector.setStopSlice(2);
+		projector.setStartSlice(startSlice);
+		projector.setStopSlice(endSlice);
 		projector.doProjection();
 		ImagePlus tmp = projector.getProjection();
 		
@@ -98,7 +101,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		IJ.run(tmp, "Make Binary", "");
 
 		// Clean the threshold result
-		IJ.run(tmp, "Gray Morphology", "radius=1 type=circle operator=open");
+		IJ.run(tmp, "Gray Morphology", "radius="+ IJ.d2s(thickness/2.0, 1) +" type=circle operator=open");
 		
 		// Skeletonize
 		Binary skeletizator = new Binary();

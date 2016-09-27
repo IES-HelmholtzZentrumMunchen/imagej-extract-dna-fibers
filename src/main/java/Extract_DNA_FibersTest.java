@@ -72,7 +72,7 @@ public class Extract_DNA_FibersTest {
 		ImagePlus expected = IJ.openImage(testpath + "example_skeletons.zip");
 		ImagePlus original = IJ.openImage(testpath + "example_original.zip");
 		
-		ImagePlus actual = Extract_DNA_Fibers.extractSkeletons(original);
+		ImagePlus actual = Extract_DNA_Fibers.extractSkeletons(original, 1, 2, 2);
 //		IJ.save(actual, testpath + "example_skeletons_actual.zip");
 
 		double error = Extract_DNA_FibersTest.computeMSE(expected, actual);
