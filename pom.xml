@@ -64,9 +64,16 @@
             <groupId>net.imagej</groupId>
             <artifactId>ij</artifactId>
         </dependency>
+        <!-- JUnit dependencies -->
+        <dependency>
+        	<groupId>junit</groupId>
+        	<artifactId>junit</artifactId>
+        	<scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
+    	<testSourceDirectory>src/main/java/test</testSourceDirectory>
     	<plugins>
     		<plugin>
     			<artifactId>maven-jar-plugin</artifactId>
