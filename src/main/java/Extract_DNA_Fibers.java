@@ -62,6 +62,9 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	
 	/** The second channel to take into account. */
 	protected int secondChannel = 1;
+	
+	/** The number of couple of points to sample in image space. */
+	protected int numberOfPoints = 1000;
 
 	/**
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
@@ -99,9 +102,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		ImagePlus skeletons = Extract_DNA_Fibers.extractSkeletons(input, startSlice, endSlice, thickness);
 		skeletons.setTitle("Skeletons image");
 		
-		// TODO #2 Populate Hough space (random selection of N couples of foreground pixels and creation of one point in Hough space; 
-		// needs: a. image space to Hough space coordinates converter, b. coordinates system definition and c. foreground coordinates 
-		// selector)
+		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 1000);
 		
 		// TODO #3 Select Hough points (search for local maxima in Hough space; needs: a. compute rescale factors --or take into account
 		// anisotropic kernels--, b. point replication on borders of theta axis and c. mean shift of points with specified bandwidth)
@@ -221,10 +222,11 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	private boolean showDialog() {
 		GenericDialog gd = new GenericDialog("DNA Fibers - extract and unfold");
 
-		int number_of_columns = 3;
+		int number_of_columns = 4;
 		gd.addNumericField("Thickness", this.thickness, 1, number_of_columns, "pixels");
 		gd.addNumericField("Start at channel", this.firstChannel, 0, number_of_columns, "");
 		gd.addNumericField("End at channel", this.secondChannel, 0, number_of_columns, "");
+		gd.addNumericField("Number of samples", this.numberOfPoints, 0, number_of_columns, "");
 
 		gd.showDialog();
 		if (gd.wasCanceled())
