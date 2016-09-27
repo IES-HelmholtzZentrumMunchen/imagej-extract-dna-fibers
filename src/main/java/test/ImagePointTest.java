@@ -34,6 +34,9 @@ import ij.process.ImageProcessor;
 public class ImagePointTest {
 	private final double epsilon = 1e-10;
 	
+	/**
+	 * Test method for {@link ImagePoint#subtract(ImagePoint)}.
+	 */
 	@Test
 	public void testSubtract() {
 		ImagePoint p1 = new ImagePoint(), p2 = new ImagePoint();
@@ -51,6 +54,9 @@ public class ImagePointTest {
 		assertEquals(new ImagePoint(-3, 14), p1.subtract(p2));
 	}
 	
+	/**
+	 * Test method for {@link ImagePoint#add(ImagePoint)}.
+	 */
 	@Test
 	public void testAdd() {
 		ImagePoint p1 = new ImagePoint(), p2 = new ImagePoint();
@@ -68,6 +74,9 @@ public class ImagePointTest {
 		assertEquals(new ImagePoint(7, 8), p1.add(p2));
 	}
 
+	/**
+	 * Test method for {@link ImagePoint#convertImagePointsToHoughPointImagePointImagePoint(ImagePoint, ImagePoint)}.
+	 */
 	@Test
 	public void testConvertImagePointsToHoughPointImagePointImagePoint() {
 		ImagePoint p1 = new ImagePoint(), p2 = new ImagePoint();
@@ -102,6 +111,9 @@ public class ImagePointTest {
 		assertEquals(pexp.rho, p.rho, this.epsilon);
 	}
 
+	/**
+	 * Test method for {@link ImagePoint#getCenterPointOfImage(ImagePlus)}.
+	 */
 	@Test
 	public void testGetCenterPointOfImage() {
 		ImagePoint p = new ImagePoint(), pexp = new ImagePoint();
@@ -156,6 +168,9 @@ public class ImagePointTest {
 		assertEquals(pexp, p);
 	}
 	
+	/**
+	 * Test method for {@link ImagePoint#getImageForegroundPoints(ImagePlus, ImagePoint)}.
+	 */
 	@Test
 	public void testGetImageForegroundPoints() {
 		List<ImagePoint> list;
