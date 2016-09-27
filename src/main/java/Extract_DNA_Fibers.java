@@ -18,11 +18,14 @@
  */
 
 
+import java.util.Vector;
+
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
+import ij.gui.Line;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
 import ij.plugin.ZProjector;
@@ -71,15 +74,33 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	@Override
 	public void run(ImageProcessor ip) {
 		if (this.showAndCheckDialog()) {
-			// TODO Global needs: a. element-wise multiplication
-			// TODO #1 Pre-process image (sum all images, auto threshold, morphological opening and skeletonization)
-			// TODO #2 Populate Hough space (random selection of N couples of foreground pixels and creation of one point in Hough space; 
-			// needs: a. image space to Hough space coordinates converter, b. coordinates system definition and c. foreground coordinates 
-			// selector)
-			// TODO #3 Select Hough points (search for local maxima in Hough space; needs: a. compute rescale factors --or take into account
-			// anisotropic kernels--, b. point replication on borders of theta axis and c. mean shift of points with specified bandwidth)
-			// TODO #4 Build segments (detect pixels along lines and break them into segments; needs: a. foreground coordinates selector)
+			Extract_DNA_Fibers.detectFibers(this.image, this.thickness, this.firstChannel, this.secondChannel);
 		}
+	}
+	
+	/**
+	 * Single method for fibers detection in input image.
+	 * @param input Input image.
+	 * @param thickness Thickness in pixels of the fibers.
+	 * @param startSlice Project from this channel.
+	 * @param endSlice Project until this channel.
+	 * @return A vector of segments as Line ROI.
+	 */
+	public static Vector<Line> detectFibers(ImagePlus input, double thickness, int startSlice, int endSlice) {
+		// TODO Global needs: a. element-wise multiplication
+		ImagePlus skeletons = Extract_DNA_Fibers.extractSkeletons(input, startSlice, endSlice, thickness);
+		skeletons.setTitle("Skeletons image");
+		
+		// TODO #2 Populate Hough space (random selection of N couples of foreground pixels and creation of one point in Hough space; 
+		// needs: a. image space to Hough space coordinates converter, b. coordinates system definition and c. foreground coordinates 
+		// selector)
+		
+		// TODO #3 Select Hough points (search for local maxima in Hough space; needs: a. compute rescale factors --or take into account
+		// anisotropic kernels--, b. point replication on borders of theta axis and c. mean shift of points with specified bandwidth)
+		
+		// TODO #4 Build segments (detect pixels along lines and break them into segments; needs: a. foreground coordinates selector)
+		
+		return new Vector<Line>();
 	}
 	
 	/**
@@ -90,7 +111,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	 * @param thickness Thickness in pixels of the fibers.
 	 * @return A binary image of skeletons of input image.
 	 */
-	public static ImagePlus extractSkeletons(ImagePlus input, int startSlice, int endSlice, int thickness) {
+	public static ImagePlus extractSkeletons(ImagePlus input, int startSlice, int endSlice, double thickness) {
 		// Max-project the selected channels
 		ZProjector projector = new ZProjector();
 		projector.setImage(input);
