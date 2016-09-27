@@ -79,5 +79,4 @@ public class Extract_DNA_FibersTest {
 		if (error > Extract_DNA_FibersTest.max_error)
 			fail("Expected <"+ Extract_DNA_FibersTest.max_error +", got "+ error);
 	}
-
 }
