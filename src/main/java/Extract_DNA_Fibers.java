@@ -17,6 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -28,6 +29,7 @@ import ij.plugin.ZProjector;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.Binary;
 
+
 /**
  * Plugin for DNA fibers extraction and unfolding.
  *
@@ -38,8 +40,17 @@ import ij.plugin.filter.Binary;
  * @author Julien Pontabry
  */
 public class Extract_DNA_Fibers implements PlugInFilter {
-	/** The input image */
+	/** The input image. */
 	protected ImagePlus image = null;
+	
+	/** The thickness of fibers to detect. */
+	protected double thickness = 2;
+	
+	/** The first channel to take into account. */
+	protected int firstChannel = 1;
+	
+	/** The second channel to take into account. */
+	protected int secondChannel = 1;
 
 	/**
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
@@ -48,6 +59,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	public int setup(String arg, ImagePlus imp) {
 		// Get inputs
 		this.image = imp;
+		this.secondChannel = this.image.getNChannels();
 
 		// Finish the setup
 		return DOES_8G | DOES_16 | DOES_32 | NO_CHANGES;
@@ -118,13 +130,18 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	private boolean showDialog() {
 		GenericDialog gd = new GenericDialog("DNA Fibers - extract and unfold");
 
-		// TODO make input parameters dialog
+		int number_of_columns = 3;
+		gd.addNumericField("Thickness", this.thickness, 1, number_of_columns, "pixels");
+		gd.addNumericField("Start at channel", this.firstChannel, 0, number_of_columns, "");
+		gd.addNumericField("End at channel", this.secondChannel, 0, number_of_columns, "");
 
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return false;
 
-		// TODO get back input parameters
+		this.thickness     = gd.getNextNumber();
+		this.firstChannel  = (int)gd.getNextNumber();
+		this.secondChannel = (int)gd.getNextNumber();
 
 		return true;
 	}
@@ -132,13 +149,28 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	private boolean showAndCheckDialog() {
 		// Call dialog
 		boolean notCanceled = this.showDialog();
+		boolean     checked = false;
 
 		// Check parameters
-//		while(notCanceled && !this.checkWidth(this.radius)) {
-//			IJ.showMessage("Width must be strictly positive!");
-//			notCanceled = this.showDialog();
-//		}
-		// TODO check parameters
+		while(notCanceled && !checked) {
+			if (Double.compare(this.thickness, 1) < 0)
+				IJ.error("Input error", "Thickness must be greater or equal than 1 pixel!");
+			else if (this.firstChannel < 1)
+				IJ.error("Input error", "First channel number must be greater or equal than 1!");
+			else if (this.firstChannel > this.image.getNChannels())
+				IJ.error("Input error", "First channel number must be lesser or equal than "+ this.image.getNChannels() +"!");
+			else if (this.secondChannel < 1)
+				IJ.error("Input error", "Second channel number must be greater or equal than 1!");
+			else if (this.secondChannel > this.image.getNChannels())
+				IJ.error("Input error", "Second channel number must be lesser or equal than "+ this.image.getNChannels() +"!");
+			else if (this.firstChannel > this.secondChannel)
+				IJ.error("Input error", "First channel number must be lesser or equal than second channel number!");
+			else
+				checked = true;
+			
+			if (!checked)
+				notCanceled = this.showDialog();
+		}
 
 		return notCanceled;
 	}
