@@ -149,20 +149,18 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	 * @param args unused
 	 */
 	public static void main(String[] args) {
-		// set the plugins.dir property to make the plugin appear in the Plugins menu
-		Class<?> clazz = Extract_DNA_Fibers.class;
-		String url = clazz.getResource("/" + clazz.getName().replace('.', '/') + ".class").toString();
-		String pluginsDir = url.substring("file:".length(), url.length() - clazz.getName().length() - ".class".length());
-		System.setProperty("plugins.dir", pluginsDir);
+		// Setup the plugin directory path
+		System.setProperty("plugins.dir", "/Applications/Fiji.app/plugins");
 
 		// start ImageJ
 		new ImageJ();
 
 		// open the Clown sample
-		ImagePlus image = IJ.openImage("http://imagej.net/images/blobs.gif");
+		ImagePlus image = IJ.openImage("src/main/resources/test/example_original.zip");
 		image.show();
 
-		/*// run the plugin
-		IJ.runPlugIn(clazz.getName(), "");*/
+		// run the plugin
+		Class<?> clazz = Extract_DNA_Fibers.class;
+		IJ.runPlugIn(clazz.getName(), "");
 	}
 }
