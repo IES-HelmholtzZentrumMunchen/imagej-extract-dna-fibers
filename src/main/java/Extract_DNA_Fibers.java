@@ -18,7 +18,13 @@
  */
 
 
+import java.util.List;
+import java.util.Random;
 import java.util.Vector;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
 
 import ij.IJ;
 import ij.ImageJ;
@@ -31,6 +37,8 @@ import ij.process.ImageProcessor;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.Binary;
+
+import coordinates.*;
 
 
 /**
@@ -142,6 +150,68 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		skeletizator.run(tmp.getProcessor());
 		
 		return tmp;
+	}
+	
+	/**
+	 * Set a list of points in Hough space from skeleton image.
+	 * 
+	 * The Hough points are constructed from at most <code>numberOfPoints</code> 
+	 * randomly sampled couples of foreground point in image space.
+	 * 
+	 * The image space is defined to have origin at image center.
+	 * 
+	 * @param skeletons Input skeletons image (binary).
+	 * @param numberOfPoints Number of points to sample.
+	 * @return A list of Hough points
+	 */
+	public static List<HoughPoint> buildHoughSpaceFromSkeletons(ImagePlus skeletons, int numberOfPoints) {
+		// Setup list of foreground pixels' coordinates in coordinate system with origin centered.
+		ImagePoint origin = ImagePoint.getCenterPointOfImage(skeletons);
+		List<ImagePoint> foregroundPoints = ImagePoint.getImageForegroundPoints(skeletons, origin);
+		
+		// Setup random generator
+		Random generator = new Random();
+		
+		// Setup generation functions to be executed in parallel
+		List<Callable<HoughPoint>> tasks = new Vector<>();
+		
+		IntStream.range(0, numberOfPoints).forEach(i -> {
+			tasks.add(() -> {
+				ImagePoint p1 = foregroundPoints.get(generator.nextInt(foregroundPoints.size()));
+				ImagePoint p2 = foregroundPoints.get(generator.nextInt(foregroundPoints.size()));
+				
+				if (!p1.equals(p2))
+					return ImagePoint.convertImagePointsToHoughPoint(p1, p2);
+				else // p1.equals(p2)
+					return null;
+			});
+		});
+		
+		// Run threads in parallel and reduce results
+		Vector<HoughPoint> results = new Vector<>();
+		ExecutorService executor = Executors.newWorkStealingPool();
+		
+	    try {
+	        executor.invokeAll(tasks)
+	        	.stream()
+	        	.map(future -> {
+	        		try {
+	        			return future.get();
+	        		}
+	        		catch (Exception e) {
+	        			throw new IllegalStateException(e);
+	        		}
+	        	})
+	        	.forEach(result -> {
+	        		if (result != null) 
+	        			results.add(result);
+	        	});
+	    }
+	    catch (Exception e) {
+	    	IJ.error("Exception", "An exception occured!\n" + e.getMessage());
+	    }
+		
+		return results;
 	}
 
 	/**

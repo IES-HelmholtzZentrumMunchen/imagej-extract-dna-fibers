@@ -18,19 +18,24 @@
  */
 import static org.junit.Assert.*;
 
+import java.util.List;
+
 import org.junit.Before;
 import org.junit.Test;
 
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.gui.NewImage;
 import ij.process.ImageProcessor;
+
+import coordinates.*;
 
 
 
 /**
+ * Test class for static methods of main plugin class.
  * @author julien.pontabry
- *
  */
 public class Extract_DNA_FibersTest {
 	/** Maximal error allowed when testing differences of structures. */
@@ -65,7 +70,7 @@ public class Extract_DNA_FibersTest {
 	}
 
 	/**
-	 * Test method for {@link Extract_DNA_Fibers#extractSkeletons(ij.ImagePlus)}.
+	 * Test method for {@link Extract_DNA_Fibers#extractSkeletons(ij.ImagePlus, int, int, double)}.
 	 */
 	@Test
 	public void testExtractSkeletons() {
@@ -78,5 +83,54 @@ public class Extract_DNA_FibersTest {
 		double error = Extract_DNA_FibersTest.computeMSE(expected, actual);
 		if (error > Extract_DNA_FibersTest.max_error)
 			fail("Expected <"+ Extract_DNA_FibersTest.max_error +", got "+ error);
+	}
+	
+	/**
+	 * Test if a list contains a specific point in Hough space.
+	 * @param pexp Expected point.
+	 * @param list List to test.
+	 * @return True if the list contains the expected point, false otherwise.
+	 */
+	public static boolean containsPoint(HoughPoint pexp, List<HoughPoint> list) {
+		boolean contains = false;
+		
+		for (HoughPoint p : list) {
+			if (Double.compare(pexp.theta, p.theta) == 0 && Double.compare(pexp.rho, p.rho) == 0) {
+				contains = true;
+				break;
+			}
+		}
+		
+		return contains;
+	}
+	
+	/**
+	 * Test method for {@link Extract_DNA_Fibers#buildHoughSpaceFromSkeletons(ij.ImagePlus, int)}.
+	 */
+	@Test
+	public void testBuildHoughSpaceFromSkeletons() {
+		HoughPoint pexp;
+		ImagePlus skeletons = NewImage.createByteImage("", 16, 16, 1, NewImage.FILL_BLACK);
+		ImageProcessor processor = skeletons.getProcessor();
+		
+		processor.set(8, 1, 1);
+		processor.set(13, 10, 1);
+		processor.set(2, 13, 1);
+		
+		
+		ImagePoint origin = ImagePoint.getCenterPointOfImage(skeletons);
+		List<HoughPoint> list = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 100);
+		
+		if (list.isEmpty())
+			fail("Expected non-empty list, got nothing");
+		
+		pexp = ImagePoint.convertImagePointsToHoughPoint(new ImagePoint(8, 1).subtract(origin), new ImagePoint(13, 10).subtract(origin));
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, list));
+		
+		pexp = ImagePoint.convertImagePointsToHoughPoint(new ImagePoint(8, 1).subtract(origin), new ImagePoint(2, 13).subtract(origin));
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, list));
+		
+		pexp = ImagePoint.convertImagePointsToHoughPoint(new ImagePoint(13, 10).subtract(origin), new ImagePoint(2, 13).subtract(origin));
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, list));
 	}
 }
