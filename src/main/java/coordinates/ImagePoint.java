@@ -106,6 +106,26 @@ public class ImagePoint extends Point2D {
 	}
 	
 	/**
+	 * Addition of two points (as in vector space).
+	 * @param p Point to add to current point.
+	 */
+	public ImagePoint add(ImagePoint p) {
+		this.x += p.x;
+		this.y += p.y;
+		return this;
+	}
+	
+	/**
+	 * Subtraction of two points (as in vector space).
+	 * @param p Point to subtract to current point.
+	 */
+	public ImagePoint subtract(ImagePoint p) {
+		this.x -= p.x;
+		this.y -= p.y;
+		return this;
+	}
+	
+	/**
 	 * Compute the Hough representation of the line going through input image points.
 	 * 
 	 * Two image points are enough to build a line and express this line in the Hough space.
@@ -171,7 +191,7 @@ public class ImagePoint extends Point2D {
 				
 				tasks.add(() -> {
 					if (processor.get(p.x, p.y) > 0)
-						return p;
+						return p.subtract(origin);
 					else
 						return null;
 				});

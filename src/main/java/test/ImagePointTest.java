@@ -33,6 +33,40 @@ import ij.process.ImageProcessor;
 
 public class ImagePointTest {
 	private final double epsilon = 1e-10;
+	
+	@Test
+	public void testSubtract() {
+		ImagePoint p1 = new ImagePoint(), p2 = new ImagePoint();
+		
+		// Subtraction of null points
+		assertEquals(p1.subtract(p2), p1);
+		assertEquals(p1.subtract(p2), p2);
+		
+		// Subtract null point
+		p1.setLocation(2, 11);
+		assertEquals(p1.subtract(p2), p1);
+		
+		// General case
+		p2.setLocation(5, -3);
+		assertEquals(p1.subtract(p2), new ImagePoint(p1.x-p2.x, p1.y-p2.y));
+	}
+	
+	@Test
+	public void testAdd() {
+		ImagePoint p1 = new ImagePoint(), p2 = new ImagePoint();
+		
+		// Addition of null points
+		assertEquals(p1.add(p2), p1);
+		assertEquals(p1.add(p2), p2);
+		
+		// Add null point
+		p1.setLocation(2, 11);
+		assertEquals(p1.add(p2), p1);
+		
+		// General case
+		p2.setLocation(5, -3);
+		assertEquals(p1.add(p2), new ImagePoint(p1.x+p2.x, p1.y+p2.y));
+	}
 
 	@Test
 	public void testConvertImagePointsToHoughPointImagePointImagePoint() {
