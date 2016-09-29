@@ -24,7 +24,7 @@ package kernel;
  */
 public class EpanechnikovKernel extends Kernel {
 	/** Normalization constant of the Epanechnikov kernel. */
-	public static final double normConst = 3.0/4.0;
+	public static final double normConst = 0.75;
 
 	/**
 	 * @see hough.Kernel#getNormConst()
