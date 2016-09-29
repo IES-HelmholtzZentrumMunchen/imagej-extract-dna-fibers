@@ -49,6 +49,12 @@ public class MeanShift {
 	/** Output modes of kernel density estimate from intput data points. */
 	protected List<HoughPoint> modes;
 	
+	/** Numerical tolerance for convergence. */
+	protected final double tolerance = 1e-2;
+	
+	/** Numerical precision for merging close modes. */
+	protected final double mergeEpsilon = 1e-1;
+	
 	/**
 	 * Default constructor.
 	 * Isotropic standard (bandwidth equal to 1 in both 
@@ -114,6 +120,21 @@ public class MeanShift {
 	}
 	
 	/**
+	 * Inner class to encapsulate a data point and its position in the list.
+	 * This is used at the reduce step in parallelization.
+	 * @author julien.pontabry
+	 */
+	protected class DataPoint {
+		public HoughPoint point = null;
+		public int position = 0;
+		
+		public DataPoint(HoughPoint point, int position) {
+			this.point = point;
+			this.position = position;
+		}
+	}
+	
+	/**
 	 * Run the mean-shift procedure.
 	 * @param data Input data points.
 	 */
@@ -123,7 +144,7 @@ public class MeanShift {
 		this.modes = new Vector<HoughPoint>();
 		
 		// Setup mean-shift for data points to be executed in parallel
-		List<Callable<HoughPoint>> tasks = new Vector<>();
+		List<Callable<DataPoint>> tasks = new Vector<>();
 				
 		IntStream.range(0, data.size()).forEach(i -> {
 			tasks.add(() -> {
@@ -131,7 +152,6 @@ public class MeanShift {
 					HoughPoint p = data.get(i);
 					
 					double error = 1;
-					double tolerance = 1e-2;
 					int iteration = 0;
 					int max_iterations = 1000;
 						
@@ -142,7 +162,7 @@ public class MeanShift {
 						double x = 0.0, y = 0.0;
 
 						for (HoughPoint q : data) {
-							// TODO do not process far away points (use partial distance)
+							// TODO do not process far away points
 							double weight = this.kernelDerivative(p, q);
 							sumOfWeights += weight;
 							x += q.getX() * weight;
@@ -153,10 +173,10 @@ public class MeanShift {
 						error = (mean.getX()-p.getX())*(mean.getX()-p.getX()) + (mean.getY()-p.getY())*(mean.getY()-p.getY());
 						p.setLocation(mean);
 						iteration++;
-					} while (Double.compare(error, tolerance) > 0 && iteration < max_iterations);
+					} while (Double.compare(error, this.tolerance) > 0 && iteration < max_iterations);
 					
 					// The final mode is the updated point
-					return p;
+					return new DataPoint(p, i);
 			});
 		});
 		
@@ -175,13 +195,39 @@ public class MeanShift {
 	        		}
 	        	})
 	        	.forEach(result -> {
-	        		// TODO merge results
-//	        		this.labels.set(0, this.selectOrAddMode(p));
+	        		this.labels.set(result.position, this.mergeOrAddMode(result.point));
 	        	});
 	    }
 	    catch (Exception e) {
 	    	IJ.error("Exception", "An exception occured!\n" + e.getMessage());
 	    }
+	}
+	
+	/**
+	 * Add a candidate mode or merge it with a close existing mode.
+	 * @param p The candidate mode.
+	 * @return The position of the added/merged mode in the list.
+	 */
+	protected Integer mergeOrAddMode(HoughPoint p) {
+		boolean found = false;
+		int i = 0;
+		
+		for (i = 0; i < this.modes.size(); i++) {
+			HoughPoint mode = this.modes.get(i);
+			
+			double xDiff = mode.getX() - p.getX();
+			double yDiff = mode.getY() - p.getY();
+			
+			if (Double.compare(xDiff*xDiff + yDiff*yDiff, this.mergeEpsilon) <= 0) {
+				found = true;
+				break;
+			}
+		}
+		
+		if (!found)
+			this.modes.add(p);
+		
+		return i;
 	}
 	
 	/**
