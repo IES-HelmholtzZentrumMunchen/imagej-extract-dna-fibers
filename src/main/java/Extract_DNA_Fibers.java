@@ -18,6 +18,7 @@
  */
 
 
+import java.awt.geom.Point2D;
 import java.util.List;
 import java.util.Random;
 import java.util.Vector;
@@ -34,6 +35,7 @@ import ij.gui.GenericDialog;
 import ij.gui.Line;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
+import kernel.MeanShift;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.GaussianBlur;
 import ij.plugin.filter.Binary;
@@ -104,8 +106,10 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		
 		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 1000);
 		
-		// TODO #3 Select Hough points (search for local maxima in Hough space; needs: a. compute rescale factors --or take into account
-		// anisotropic kernels--, b. point replication on borders of theta axis and c. mean shift of points with specified bandwidth)
+		// TODO replicate data on theta axis both side (size kernel)
+		// TODO setup anisotropic kernel with specified bandwidths
+		MeanShift modesFinder = new MeanShift();
+		modesFinder.runWith(houghPoints);
 		
 		// TODO #4 Build segments (detect pixels along lines and break them into segments; needs: a. foreground coordinates selector)
 		

@@ -1,0 +1,230 @@
+/*
+ * Manipulate and analyse DNA fibers data
+ * This plugin extracts and unfold the DNA fibers selected by a curve ROI
+ * Copyright (C) 2016  Julien Pontabry (Helmholtz IES)
+
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+package kernel;
+
+import java.util.List;
+import java.util.Vector;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.stream.IntStream;
+
+import coordinates.HoughPoint;
+import coordinates.ImagePoint;
+import ij.IJ;
+
+
+/**
+ * Defines the mean-shift algorithm on 2D points.
+ * The <code>Point2D</code> class is not coded to make it
+ * generic enough, so here we are using HoughPoint class instead.
+ * @author julien.pontabry
+ */
+public class MeanShift {
+	/** Kernel used for density estimate. */
+	protected Kernel k;
+	
+	/** Bandwidths for each component. */
+	protected HoughPoint h;
+	
+	/** Output labels of input data points.*/
+	protected List<Integer> labels;
+	
+	/** Output modes of kernel density estimate from intput data points. */
+	protected List<HoughPoint> modes;
+	
+	/**
+	 * Default constructor.
+	 * Isotropic standard (bandwidth equal to 1 in both 
+	 * directions) Gaussian kernel is used as default.
+	 */
+	public MeanShift() {
+		this(new GaussianKernel());
+	}
+	
+	/**
+	 * Constructor.
+	 * The kernel is by default isotropic with bandwidth
+	 * equal to 1 in both directions.
+	 * @param k The kernel to use for density estimate.
+	 */
+	public MeanShift(Kernel k) {
+		this(k, new HoughPoint(1, 1));
+	}
+	
+	/**
+	 * Full constructor.
+	 * @param k The kernel to use for density estimate.
+	 * @param h The bandwidths for both components as a <code>HoughPoint</code>
+	 */
+	public MeanShift(Kernel k, HoughPoint h) {
+		this.k = k;
+		this.h = h;
+		
+		this.labels = null;
+		this.modes = null;
+	}
+	
+	/**
+	 * Set the kernel to use for density estimate.
+	 * @param k Any kernel.
+	 */
+	public void setKernel(Kernel k) {
+		this.k = k;
+	}
+	
+	/**
+	 * Get the kernel used for density estimate.
+	 * @return Currently used kernel.
+	 */
+	public Kernel getKernel() {
+		return this.k;
+	}
+	
+	/**
+	 * Set the bandwidths used within kernel for density estimate.
+	 * @param h Any bandwidth vector as HoughPoint.
+	 */
+	public void setBandwidth(HoughPoint h) {
+		this.h = h;
+	}
+	
+	/**
+	 * Get the bandwidths used within kernel for density estimate.
+	 * @return Currently used bandwidths.
+	 */
+	public HoughPoint getBandwidth() {
+		return this.h;
+	}
+	
+	/**
+	 * Run the mean-shift procedure.
+	 * @param data Input data points.
+	 */
+	public void runWith(List<HoughPoint> data) {
+		// Initialize output
+		this.labels = new Vector<Integer>(data.size());
+		this.modes = new Vector<HoughPoint>();
+		
+		// Setup mean-shift for data points to be executed in parallel
+		List<Callable<HoughPoint>> tasks = new Vector<>();
+				
+		IntStream.range(0, data.size()).forEach(i -> {
+			tasks.add(() -> {
+					// Initialization of the mean shift
+					HoughPoint p = data.get(i);
+					
+					double error = 1;
+					double tolerance = 1e-2;
+					int iteration = 0;
+					int max_iterations = 1000;
+						
+					// Push iteratively point to closest mode
+					do {
+						HoughPoint mean = new HoughPoint();
+						double sumOfWeights = 0.0;
+						double x = 0.0, y = 0.0;
+
+						for (HoughPoint q : data) {
+							// TODO do not process far away points (use partial distance)
+							double weight = this.kernelDerivative(p, q);
+							sumOfWeights += weight;
+							x += q.getX() * weight;
+							y += q.getY() * weight;
+						}
+
+						mean.setLocation(x/sumOfWeights, y/sumOfWeights);
+						error = (mean.getX()-p.getX())*(mean.getX()-p.getX()) + (mean.getY()-p.getY())*(mean.getY()-p.getY());
+						p.setLocation(mean);
+						iteration++;
+					} while (Double.compare(error, tolerance) > 0 && iteration < max_iterations);
+					
+					// The final mode is the updated point
+					return p;
+			});
+		});
+		
+		// Run threads in parallel and reduce results
+		ExecutorService executor = Executors.newWorkStealingPool();
+		
+	    try {
+	        executor.invokeAll(tasks)
+	        	.stream()
+	        	.map(future -> {
+	        		try {
+	        			return future.get();
+	        		}
+	        		catch (Exception e) {
+	        			throw new IllegalStateException(e);
+	        		}
+	        	})
+	        	.forEach(result -> {
+	        		// TODO merge results
+//	        		this.labels.set(0, this.selectOrAddMode(p));
+	        	});
+	    }
+	    catch (Exception e) {
+	    	IJ.error("Exception", "An exception occured!\n" + e.getMessage());
+	    }
+	}
+	
+	/**
+	 * Get the labels of data points.
+	 * The algorithm must be ran on some data points before (output is null otherwise).
+	 * @return List of integers (labels).
+	 */
+	public List<Integer> getLabels() {
+		return this.labels;
+	}
+	
+	/**
+	 * Get the output modes of the kernel density estimate of data points.
+	 * The algorithm must be ran on some data points before (output is null otherwise).
+	 * @return List of modes as points.
+	 */
+	public List<HoughPoint> getModes() {
+		return this.modes;
+	}
+	
+	/**
+	 * Estimate kernel distance for 2D vectors with bandwidths.
+	 * @param p First point of the kernel distance.
+	 * @param q Second point of the kernel distance.
+	 * @return Kernel distance between the two specified points <code>p</code> and <code>q</code>.
+	 */
+	protected double kernel(HoughPoint p, HoughPoint q) {
+		double x = (p.getX() - q.getX()) / this.h.getX();
+		double y = (p.getY() - q.getY()) / this.h.getY();
+		
+		return this.k.evaluate(x*x + y*y);
+	}
+	
+	/**
+	 * Estimate kernel derivative distance for 2D vectors with bandwidths.
+	 * @param p First point of the kernel distance.
+	 * @param q Second point of the kernel distance.
+	 * @return Kernel distance between the two specified points <code>p</code> and <code>q</code>.
+	 */
+	protected double kernelDerivative(HoughPoint p, HoughPoint q) {
+		double x = (p.getX() - q.getX()) / this.h.getX();
+		double y = (p.getY() - q.getY()) / this.h.getY();
+		
+		return this.k.derivative(x*x + y*y);
+	}
+}
