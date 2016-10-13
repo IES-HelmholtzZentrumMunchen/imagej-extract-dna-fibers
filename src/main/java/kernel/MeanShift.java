@@ -23,6 +23,7 @@ import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
 import coordinates.HoughPoint;
@@ -50,10 +51,13 @@ public class MeanShift {
 	protected List<HoughPoint> modes;
 	
 	/** Numerical tolerance for convergence. */
-	protected final double tolerance = 1e-2;
+	protected final double tolerance = 1e-20;
 	
 	/** Numerical precision for merging close modes. */
-	protected final double mergeEpsilon = 1e-1;
+	protected final double mergeEpsilon = 1e-2;
+	
+	/** Maximum number of iterations for mean shift convergence. */
+	protected final int max_iterations = 1000;
 	
 	/**
 	 * Default constructor.
@@ -85,6 +89,7 @@ public class MeanShift {
 		
 		this.labels = null;
 		this.modes = null;
+		this.labels = null;
 	}
 	
 	/**
@@ -151,26 +156,26 @@ public class MeanShift {
 					// Initialization of the mean shift
 					HoughPoint p = data.get(i);
 					
-					double error = 1;
+					double error;
 					int iteration = 0;
-					int max_iterations = 1000;
 						
 					// Push iteratively point to closest mode
 					do {
-						HoughPoint mean = new HoughPoint();
 						double sumOfWeights = 0.0;
 						double x = 0.0, y = 0.0;
 
 						for (HoughPoint q : data) {
-							// TODO do not process far away points
-							double weight = this.kernelDerivative(p, q);
+							// TODO do not process points outside of kernel domain
+//							double weight = this.kernelDerivative(p, q);
+							double weight = this.kernel(p, q);
 							sumOfWeights += weight;
 							x += q.getX() * weight;
 							y += q.getY() * weight;
 						}
 
-						mean.setLocation(x/sumOfWeights, y/sumOfWeights);
-						error = (mean.getX()-p.getX())*(mean.getX()-p.getX()) + (mean.getY()-p.getY())*(mean.getY()-p.getY());
+						HoughPoint mean = new HoughPoint(x/sumOfWeights, y/sumOfWeights);
+						double x_diff = mean.getX()-p.getX(), y_diff = mean.getY()-p.getY();
+						error = x_diff*x_diff + y_diff*y_diff;
 						p.setLocation(mean);
 						iteration++;
 					} while (Double.compare(error, this.tolerance) > 0 && iteration < max_iterations);
@@ -181,7 +186,7 @@ public class MeanShift {
 		});
 		
 		// Run threads in parallel and reduce results
-		ExecutorService executor = Executors.newWorkStealingPool();
+		ExecutorService executor = Executors.newWorkStealingPool(1);
 		
 	    try {
 	        executor.invokeAll(tasks)
@@ -195,7 +200,9 @@ public class MeanShift {
 	        		}
 	        	})
 	        	.forEach(result -> {
-	        		this.labels.set(result.position, this.mergeOrAddMode(result.point));
+	        		this.mergeOrAddMode(result.point);
+	        		// FIXME why when setting labels, there is only one loop running?
+//	        		this.labels.set(result.position, this.mergeOrAddMode(result.point));
 	        	});
 	    }
 	    catch (Exception e) {
@@ -258,7 +265,7 @@ public class MeanShift {
 		double x = (p.getX() - q.getX()) / this.h.getX();
 		double y = (p.getY() - q.getY()) / this.h.getY();
 		
-		return this.k.evaluate(x*x + y*y);
+		return this.k.evaluate(Math.sqrt(x*x + y*y));
 	}
 	
 	/**
@@ -271,6 +278,6 @@ public class MeanShift {
 		double x = (p.getX() - q.getX()) / this.h.getX();
 		double y = (p.getY() - q.getY()) / this.h.getY();
 		
-		return this.k.derivative(x*x + y*y);
+		return this.k.derivative(Math.sqrt(x*x + y*y));
 	}
 }
