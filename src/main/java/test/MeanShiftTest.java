@@ -42,37 +42,108 @@ public class MeanShiftTest {
 	/** Instance of the class under test. */
 	private MeanShift process = null;
 	
-	/** Instance of data point list to generate. */
+	/** Instance of dataset. */
 	private List<HoughPoint> data = null;
+	
+	/** Instance of expected modes list. */
+	private List<HoughPoint> modes = null;
+	
+	/** Instance of expected labels. */
+	private List<Integer> labels = null;
+	
+	/** Path to test resources. */
+	private String testPath = "src/main/resources/test/";
+	
+	/** Filename of expected modes. */
+	private String modeFile = "modes.csv";
+	
+	/** Filename of testing dataset. */
+	private String dataFile = "data.csv";
+	
+	/** Filename of expected labels. */
+	private String labelsFile = "labels.csv";
+	
+	/** CSV separator. */
+	private String csvSeparator = ",";
 	
 	/**
 	 * @throws java.lang.Exception
 	 */
 	@Before
 	public void setUp() throws Exception {
+		// Declare a buffer for file reading
+		BufferedReader buffer;
+		
 		// Build a standard mean-shift
-		this.process = new MeanShift(new GaussianKernel(), new HoughPoint(1, 1));
+		this.process = new MeanShift(new GaussianKernel(), new HoughPoint(0.6, 0.6));
 		
 		// Read data files and fill the data point list
 		this.data = new Vector<HoughPoint>();
 		
-		String testPath = "src/main/resources/test/";
-		String modeFile = "modes.csv";
-		String dataFile = "data.csv";
-		String csvSeparator = ",";
-		
+		buffer = null;
 		try {
 			String line = "";
 			
-			BufferedReader buffer = new BufferedReader(new FileReader(testPath + dataFile));
+			buffer = new BufferedReader(new FileReader(this.testPath + this.dataFile));
 			
 			while((line = buffer.readLine()) != null) {
-				String[] coordinates = line.split(csvSeparator);
+				String[] coordinates = line.split(this.csvSeparator);
 				this.data.add(new HoughPoint(Double.parseDouble(coordinates[0]), Double.parseDouble(coordinates[1])));
 			}
 		}
 		catch (IOException e) {
 			e.printStackTrace();
+		}
+		finally {
+			if (buffer != null) {
+				buffer.close();
+			}
+		}
+		
+		// Read modes files and fill the modes point list
+		this.modes = new Vector<HoughPoint>();
+		
+		buffer = null;
+		try {
+			String line = "";
+					
+			buffer = new BufferedReader(new FileReader(this.testPath + this.modeFile));
+					
+			while((line = buffer.readLine()) != null) {
+				String[] coordinates = line.split(this.csvSeparator);
+				this.modes.add(new HoughPoint(Double.parseDouble(coordinates[0]), Double.parseDouble(coordinates[1])));
+			}
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		finally {
+			if (buffer != null) {
+				buffer.close();
+			}
+		}
+		
+		// Read labels files and fill the labels point list
+		this.labels = new Vector<Integer>();
+
+		buffer = null;
+		try {
+			String line = "";
+
+			buffer = new BufferedReader(new FileReader(this.testPath + this.labelsFile));
+
+			while((line = buffer.readLine()) != null) {
+				String[] coordinate = line.split(this.csvSeparator);
+				this.labels.add(Integer.parseInt(coordinate[0]));
+			}
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+		finally {
+			if (buffer != null) {
+				buffer.close();
+			}
 		}
 	}
 
@@ -81,11 +152,27 @@ public class MeanShiftTest {
 	 */
 	@Test
 	public void testRunWith() {
-		System.out.println(this.data.size());
-		for (HoughPoint p : this.data) {
-			System.out.println(p);
+		// Run process
+		this.process.runWith(this.data);
+		
+		// Check modes
+		List<HoughPoint> modes = this.process.getModes();
+		for (HoughPoint mode : modes)
+			System.out.println(mode);
+		assertEquals(this.modes.size(), modes.size());
+		
+		for (int i = 0; i < modes.size(); i++) {
+			HoughPoint expmode = this.modes.get(i);
+			HoughPoint mode = modes.get(i);
+			assertEquals(expmode.getX(), mode.getX(), 1e-7);
+			assertEquals(expmode.getY(), mode.getY(), 1e-7);
 		}
 		
-		fail("Not yet implemented");
+		// Check labels
+		List<Integer> labels = this.process.getLabels();
+		assertEquals(this.labels.size(), labels.size());
+		
+		for (int i = 0; i < labels.size(); i++)
+			assertEquals(this.labels.get(i), labels.get(i));
 	}
 }
