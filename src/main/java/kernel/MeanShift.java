@@ -18,6 +18,7 @@
  */
 package kernel;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
 import java.util.concurrent.Callable;
@@ -145,7 +146,8 @@ public class MeanShift {
 	 */
 	public void runWith(List<HoughPoint> data) {
 		// Initialize output
-		this.labels = new Vector<Integer>(data.size());
+//		this.labels = new Vector<Integer>(data.size());
+		Integer[] labels = new Integer[data.size()];
 		this.modes = new Vector<HoughPoint>();
 		
 		// Setup mean-shift for data points to be executed in parallel
@@ -201,12 +203,14 @@ public class MeanShift {
 	        		}
 	        	})
 	        	.forEach(result -> {
-	        		this.mergeOrAddMode(result.point);
-	        		// FIXME why when setting labels, there is only one loop running?
-//	        		this.labels.set(result.position, this.mergeOrAddMode(result.point));
+	        		labels[result.position] = this.mergeOrAddMode(result.point);
 	        	});
+	        
+	        this.labels = new Vector<Integer>(Arrays.asList(labels));
 	    }
 	    catch (Exception e) {
+	    	this.modes = new Vector<HoughPoint>();
+	    	this.labels = new Vector<Integer>();
 	    	IJ.error("Exception", "An exception occured!\n" + e.getMessage());
 	    }
 	}
@@ -219,14 +223,16 @@ public class MeanShift {
 	protected Integer mergeOrAddMode(HoughPoint p) {
 		boolean found = false;
 		int i = 0;
+
 		
 		for (i = 0; i < this.modes.size(); i++) {
 			HoughPoint mode = this.modes.get(i);
 			
 			double xDiff = mode.getX() - p.getX();
 			double yDiff = mode.getY() - p.getY();
+
 			
-			if (Double.compare(xDiff*xDiff + yDiff*yDiff, this.mergeEpsilon) <= 0) {
+			if (Double.compare(Math.sqrt(xDiff*xDiff + yDiff*yDiff), this.mergeEpsilon) < 0) {
 				found = true;
 				break;
 			}

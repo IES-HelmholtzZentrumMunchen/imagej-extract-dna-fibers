@@ -166,11 +166,11 @@ public class MeanShiftTest {
 			assertEquals(expmode.getY(), mode.getY(), 1e-7);
 		}
 		
-//		// Check labels
-//		List<Integer> labels = this.process.getLabels();
-//		assertEquals(this.labels.size(), labels.size());
-//		
-//		for (int i = 0; i < labels.size(); i++)
-//			assertEquals(this.labels.get(i), labels.get(i));
+		// Check labels
+		List<Integer> labels = this.process.getLabels();
+		assertEquals(this.labels.size(), labels.size());
+		
+		for (int i = 0; i < labels.size(); i++)
+			assertEquals("element " + i + ": ", this.labels.get(i), labels.get(i));
 	}
 }
