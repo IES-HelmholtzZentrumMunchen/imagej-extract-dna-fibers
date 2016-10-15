@@ -40,7 +40,15 @@ public class HoughPoint extends Point2D {
 	 * Gives the origin point.
 	 */
 	public HoughPoint() {
-		// ---
+		this(0.0, 0.0);
+	}
+	
+	/**
+	 * Constructor.
+	 * @param p Input point used to initialized new point.
+	 */
+	public HoughPoint(HoughPoint p) {
+		this(p.theta, p.rho);
 	}
 	
 	/**

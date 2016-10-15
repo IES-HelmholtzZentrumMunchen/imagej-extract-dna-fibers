@@ -51,10 +51,10 @@ public class MeanShift {
 	protected List<HoughPoint> modes;
 	
 	/** Numerical tolerance for convergence. */
-	protected final double tolerance = 1e-20;
+	protected final double tolerance = 1e-10;
 	
 	/** Numerical precision for merging close modes. */
-	protected final double mergeEpsilon = 1e-2;
+	protected final double mergeEpsilon = 1e-3;
 	
 	/** Maximum number of iterations for mean shift convergence. */
 	protected final int max_iterations = 1000;
@@ -154,8 +154,8 @@ public class MeanShift {
 		IntStream.range(0, data.size()).forEach(i -> {
 			tasks.add(() -> {
 					// Initialization of the mean shift
-					HoughPoint p = data.get(i);
-					
+					HoughPoint p = new HoughPoint(data.get(i));
+
 					double error;
 					int iteration = 0;
 						
@@ -177,6 +177,7 @@ public class MeanShift {
 						double x_diff = mean.getX()-p.getX(), y_diff = mean.getY()-p.getY();
 						error = x_diff*x_diff + y_diff*y_diff;
 						p.setLocation(mean);
+
 						iteration++;
 					} while (Double.compare(error, this.tolerance) > 0 && iteration < max_iterations);
 					
@@ -186,7 +187,7 @@ public class MeanShift {
 		});
 		
 		// Run threads in parallel and reduce results
-		ExecutorService executor = Executors.newWorkStealingPool(1);
+		ExecutorService executor = Executors.newWorkStealingPool(1);// TODO to change for parallel
 		
 	    try {
 	        executor.invokeAll(tasks)
