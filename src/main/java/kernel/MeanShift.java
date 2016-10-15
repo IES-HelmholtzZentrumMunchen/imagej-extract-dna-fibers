@@ -187,7 +187,7 @@ public class MeanShift {
 		});
 		
 		// Run threads in parallel and reduce results
-		ExecutorService executor = Executors.newWorkStealingPool(1);// TODO to change for parallel
+		ExecutorService executor = Executors.newWorkStealingPool();
 		
 	    try {
 	        executor.invokeAll(tasks)
