@@ -106,6 +106,12 @@
     			<artifactId>ij</artifactId>
     			<version>1.51e</version>
     		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
     	</dependencies>
     </dependencyManagement>
 </project>
