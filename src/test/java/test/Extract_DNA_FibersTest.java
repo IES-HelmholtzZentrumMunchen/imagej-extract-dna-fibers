@@ -51,6 +51,7 @@ public class Extract_DNA_FibersTest {
 	public void setUp() throws Exception {
 		System.setProperty("plugins.dir", "/Applications/Fiji.app/plugins");
 		new ImageJ();
+		System.out.println("IJ just started.");
 	}
 	
 	/** 
@@ -80,9 +81,11 @@ public class Extract_DNA_FibersTest {
 	public void testExtractSkeletons() {
 		ImagePlus expected = IJ.openImage(testpath + "example_skeletons.zip");
 		ImagePlus original = IJ.openImage(testpath + "example_original.zip");
+		System.out.println("Images loaded.");
 		
 		ImagePlus actual = Extract_DNA_Fibers.extractSkeletons(original, 1, 2, 2);
 //		IJ.save(actual, testpath + "example_skeletons_actual.zip");
+		System.out.println("Test finished.");
 
 		double error = Extract_DNA_FibersTest.computeMSE(expected, actual);
 		if (error > Extract_DNA_FibersTest.max_error)
