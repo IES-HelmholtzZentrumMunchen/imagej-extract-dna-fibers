@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+package test;
+
 import static org.junit.Assert.*;
 
 import java.util.List;
@@ -31,6 +33,8 @@ import ij.process.ImageProcessor;
 
 import coordinates.*;
 
+import main.Extract_DNA_Fibers;
+
 
 
 /**
@@ -41,7 +45,7 @@ public class Extract_DNA_FibersTest {
 	/** Maximal error allowed when testing differences of structures. */
 	public static final double max_error = 1e-2;
 	
-	public String testpath = "src/main/resources/test/";
+	public String testpath = "src/test/resources/";
 	
 	@Before
 	public void setUp() throws Exception {

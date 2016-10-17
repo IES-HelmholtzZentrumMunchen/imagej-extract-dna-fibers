@@ -52,7 +52,7 @@ public class MeanShiftTest {
 	private List<Integer> labels = null;
 	
 	/** Path to test resources. */
-	private String testPath = "src/main/resources/test/";
+	private String testPath = "src/test/resources/";
 	
 	/** Filename of expected modes. */
 	private String modeFile = "modes.csv";
