@@ -70,6 +70,12 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	
 	/** The number of couple of points to sample in image space. */
 	protected int numberOfPoints = 1000;
+	
+	/** The angular sensitivity (bandwidth on theta axis in Hough space). */
+	protected double angularSensitivity = 2.5;
+	
+	/** The thickness sensitivity (bandwidth on rho axis in Hough space). */
+	protected double thicknessSensitivity = 5;
 
 	/**
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
@@ -90,7 +96,8 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	@Override
 	public void run(ImageProcessor ip) {
 		if (this.showAndCheckDialog()) {
-			Extract_DNA_Fibers.detectFibers(this.image, this.thickness, this.firstChannel, this.secondChannel);
+			Extract_DNA_Fibers.detectFibers(this.image, this.thickness, this.firstChannel, 
+					this.secondChannel, this.angularSensitivity, this.thicknessSensitivity);
 		}
 	}
 	
@@ -102,16 +109,15 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	 * @param endSlice Project until this channel.
 	 * @return A vector of segments as Line ROI.
 	 */
-	public static Vector<Line> detectFibers(ImagePlus input, double thickness, int startSlice, int endSlice) {
-		// TODO Global needs: a. element-wise multiplication
+	public static Vector<Line> detectFibers(ImagePlus input, double thickness, int startSlice, 
+			int endSlice, double angularSensitivity, double thicknessSensitivity) {
 		ImagePlus skeletons = Extract_DNA_Fibers.extractSkeletons(input, startSlice, endSlice, thickness);
 		skeletons.setTitle("Skeletons image");
 		
 		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 1000);
 		
 		// TODO replicate data on theta axis both side (size kernel)
-		// TODO setup anisotropic kernel with specified bandwidths
-		MeanShift modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint());
+		MeanShift modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint(angularSensitivity, thicknessSensitivity));
 		modesFinder.runWith(houghPoints);
 		
 		// TODO #4 Build segments (detect pixels along lines and break them into segments; needs: a. foreground coordinates selector)
@@ -234,14 +240,18 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		gd.addNumericField("Start at channel", this.firstChannel, 0, number_of_columns, "");
 		gd.addNumericField("End at channel", this.secondChannel, 0, number_of_columns, "");
 		gd.addNumericField("Number of samples", this.numberOfPoints, 0, number_of_columns, "");
+		gd.addNumericField("Thickness sensitivity", this.thicknessSensitivity, 1, number_of_columns, "pixels");
+		gd.addNumericField("Angular sensitivity", this.angularSensitivity, 1, number_of_columns, "degrees");
 
 		gd.showDialog();
 		if (gd.wasCanceled())
 			return false;
 
-		this.thickness     = gd.getNextNumber();
-		this.firstChannel  = (int)gd.getNextNumber();
-		this.secondChannel = (int)gd.getNextNumber();
+		this.thickness            = gd.getNextNumber();
+		this.firstChannel         = (int)gd.getNextNumber();
+		this.secondChannel        = (int)gd.getNextNumber();
+		this.thicknessSensitivity = gd.getNextNumber();
+		this.angularSensitivity   = gd.getNextNumber();
 
 		return true;
 	}
@@ -265,6 +275,10 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 				IJ.error("Input error", "Second channel number must be lesser or equal than "+ this.image.getNChannels() +"!");
 			else if (this.firstChannel > this.secondChannel)
 				IJ.error("Input error", "First channel number must be lesser or equal than second channel number!");
+			else if (Double.compare(this.angularSensitivity, 0.0) <= 0)
+				IJ.error("Input error", "Angular sensitivity must be greater than zero!");
+			else if (Double.compare(this.thicknessSensitivity, 0.0) <= 0)
+				IJ.error("Input error", "Thickness sensitivity must be greater than zero!");
 			else
 				checked = true;
 			
@@ -291,7 +305,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		new ImageJ();
 
 		// open the Clown sample
-		ImagePlus image = IJ.openImage("src/main/resources/test/example_original.zip");
+		ImagePlus image = IJ.openImage("src/test/resources/example_original.zip");
 		image.show();
 
 		// run the plugin
