@@ -55,7 +55,7 @@
 	</scm>
 
     <properties>
-    	<main-class>Extract_DNA_Fibers</main-class>
+    	<main-class>main.Extract_DNA_Fibers</main-class>
     </properties>
 
     <dependencies>
