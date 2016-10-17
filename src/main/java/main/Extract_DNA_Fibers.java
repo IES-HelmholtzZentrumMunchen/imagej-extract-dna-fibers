@@ -117,7 +117,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 1000);
 		
 		List<HoughPoint> replicatedHoughPoints = Extract_DNA_Fibers.replicateHoughSpaceBorders(houghPoints, angularSensitivity);
-		MeanShift                  modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint(angularSensitivity, thicknessSensitivity));
+		MeanShift                  modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint(angularSensitivity*Math.PI/180.0, thicknessSensitivity));
 		modesFinder.runWith(replicatedHoughPoints);
 		
 		// TODO #4 Build segments (detect pixels along lines and break them into segments; needs: a. foreground coordinates selector)
