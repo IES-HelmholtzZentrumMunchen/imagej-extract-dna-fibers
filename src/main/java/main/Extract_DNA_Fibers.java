@@ -37,6 +37,7 @@ import ij.gui.GenericDialog;
 import ij.gui.Line;
 import ij.plugin.filter.PlugInFilter;
 import ij.process.ImageProcessor;
+import kernel.GaussianKernel;
 import kernel.MeanShift;
 import ij.plugin.ZProjector;
 import ij.plugin.filter.GaussianBlur;
@@ -110,7 +111,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		
 		// TODO replicate data on theta axis both side (size kernel)
 		// TODO setup anisotropic kernel with specified bandwidths
-		MeanShift modesFinder = new MeanShift();
+		MeanShift modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint());
 		modesFinder.runWith(houghPoints);
 		
 		// TODO #4 Build segments (detect pixels along lines and break them into segments; needs: a. foreground coordinates selector)
