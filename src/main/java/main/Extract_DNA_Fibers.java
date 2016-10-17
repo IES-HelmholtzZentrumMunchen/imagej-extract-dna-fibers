@@ -116,7 +116,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		
 		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 1000);
 		
-		List<HoughPoint> replicatedHoughPoints = Extract_DNA_Fibers.replicateHoughSpaceBorders(houghPoints, angularSensitivity);
+		List<HoughPoint> replicatedHoughPoints = Extract_DNA_Fibers.replicateHoughSpaceBorders(houghPoints, angularSensitivity, Math.PI/2.0, -Math.PI/2.0, true);
 		MeanShift                  modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint(angularSensitivity*Math.PI/180.0, thicknessSensitivity));
 		modesFinder.runWith(replicatedHoughPoints);
 		
@@ -130,31 +130,29 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	 * This operation is needed to avoid border effects when detecting points.
 	 * @param houghPoints Input points.
 	 * @param angularBandwidth Bandwidth for peak detection on angular axis.
+	 * @param supBound Upper bound of angular axis.
+	 * @param infBound Lower bound of angular axis.
+	 * @param inverse True to inverse the other axis.
 	 * @return Input points with replicated borders.
 	 */
-	public static List<HoughPoint> replicateHoughSpaceBorders(List<HoughPoint> houghPoints, double angularBandwidth) {
+	public static List<HoughPoint> replicateHoughSpaceBorders(List<HoughPoint> houghPoints, double angularBandwidth, double supBound, double infBound, boolean inverse) {
 		List<HoughPoint> replicatedHoughPoints = new Vector<HoughPoint>();
 		replicatedHoughPoints.addAll(houghPoints);
 		
-		// Compute maximal values and range of angles
-		double maxAngular = -Math.PI/2;
-		double minAngular = -maxAngular;
+		// range of angles
+		double angularRange = supBound - infBound;
 		
-		for (HoughPoint p : houghPoints) {
-			if (p.theta > maxAngular)
-				maxAngular = p.theta;
-			else if (p.theta < minAngular)
-				minAngular = p.theta;
-		}
-		
-		double angularRange = maxAngular - minAngular;
+		// Inversion
+		double factor = 1.0;
+		if (inverse)
+			factor = -1.0;
 		
 		// Add symmetric points
 		for (HoughPoint p : houghPoints) {
-			if (Double.compare(p.theta, maxAngular - 5.0*angularBandwidth) >= 0)
-				replicatedHoughPoints.add(new HoughPoint(p.theta-angularRange, -p.rho));
-			else if (Double.compare(p.theta, maxAngular + 5.0*angularBandwidth) <= 0)
-				replicatedHoughPoints.add(new HoughPoint(p.theta+angularRange, -p.rho));
+			if (Double.compare(p.theta, supBound - 5.0*angularBandwidth) >= 0)
+				replicatedHoughPoints.add(new HoughPoint(p.theta-angularRange, factor*p.rho));
+			else if (Double.compare(p.theta, infBound + 5.0*angularBandwidth) <= 0)
+				replicatedHoughPoints.add(new HoughPoint(p.theta+angularRange, factor*p.rho));
 		}
 		
 		return replicatedHoughPoints;

@@ -21,6 +21,7 @@ package test;
 import static org.junit.Assert.*;
 
 import java.util.List;
+import java.util.Vector;
 
 import org.junit.Before;
 import org.junit.Ignore;
@@ -101,7 +102,8 @@ public class Extract_DNA_FibersTest {
 		boolean contains = false;
 		
 		for (HoughPoint p : list) {
-			if (Double.compare(pexp.theta, p.theta) == 0 && Double.compare(pexp.rho, p.rho) == 0) {
+//			if (Double.compare(pexp.theta, p.theta) == 0 && Double.compare(pexp.rho, p.rho) == 0) {
+			if (Math.abs(pexp.theta-p.theta) < 1e-10 && Math.abs(pexp.rho-p.rho) < 1e-10) {
 				contains = true;
 				break;
 			}
@@ -138,5 +140,60 @@ public class Extract_DNA_FibersTest {
 		
 		pexp = ImagePoint.convertImagePointsToHoughPoint(new ImagePoint(13, 10).subtract(origin), new ImagePoint(2, 13).subtract(origin));
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, list));
+	}
+	
+	/**
+	 * Test method for {@link Extract_DNA_Fibers#replicateHoughSpaceBorders(java.util.List<coordinates.HoughPoint>, double}
+	 */
+	@Test
+	public void replicateHoughSpaceBorders() {
+		// Dataset
+		List<HoughPoint> points = new Vector<HoughPoint>();
+		points.add(new HoughPoint(1,3)); points.add(new HoughPoint(2,3));
+		points.add(new HoughPoint(1,-2)); points.add(new HoughPoint(-1,2));
+		points.add(new HoughPoint(1,2)); points.add(new HoughPoint(1,0));
+		points.add(new HoughPoint(-3,3)); points.add(new HoughPoint(-1,1));
+		
+		double supBoundX = 3.0, infBoundX = -3.0;
+		
+		// Test with bandwidth equals 0.2
+		List<HoughPoint> rep = Extract_DNA_Fibers.replicateHoughSpaceBorders(points, 0.2, supBoundX, infBoundX, false);
+		
+		assertEquals(points.size()+2, rep.size());
+		
+		for (HoughPoint p : points)
+			assertTrue(Extract_DNA_FibersTest.containsPoint(p, rep));
+		
+		HoughPoint pexp = new HoughPoint(-4,3);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(3,3);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		
+		// Test with bandwidth equals 0.4
+		rep = Extract_DNA_Fibers.replicateHoughSpaceBorders(points, 0.4, supBoundX, infBoundX, true);
+
+		assertEquals(points.size()+8, rep.size());
+
+		for (HoughPoint p : points)
+			assertTrue(Extract_DNA_FibersTest.containsPoint(p, rep));
+		
+		pexp = new HoughPoint(-4,-3);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(3,-3);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(5,-1);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(5,-2);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(-5,2);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(-5,2);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(-5,-0);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(-5,-2);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(-5,-3);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
 	}
 }
