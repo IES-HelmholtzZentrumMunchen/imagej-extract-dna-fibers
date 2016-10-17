@@ -116,13 +116,48 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		
 		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 1000);
 		
-		// TODO replicate data on theta axis both side (size kernel)
-		MeanShift modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint(angularSensitivity, thicknessSensitivity));
-		modesFinder.runWith(houghPoints);
+		List<HoughPoint> replicatedHoughPoints = Extract_DNA_Fibers.replicateHoughSpaceBorders(houghPoints, angularSensitivity);
+		MeanShift                  modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint(angularSensitivity, thicknessSensitivity));
+		modesFinder.runWith(replicatedHoughPoints);
 		
 		// TODO #4 Build segments (detect pixels along lines and break them into segments; needs: a. foreground coordinates selector)
 		
 		return new Vector<Line>();
+	}
+	
+	/**
+	 * Replicate borders of Hough space on angular axis (Theta).
+	 * This operation is needed to avoid border effects when detecting points.
+	 * @param houghPoints Input points.
+	 * @param angularBandwidth Bandwidth for peak detection on angular axis.
+	 * @return Input points with replicated borders.
+	 */
+	public static List<HoughPoint> replicateHoughSpaceBorders(List<HoughPoint> houghPoints, double angularBandwidth) {
+		List<HoughPoint> replicatedHoughPoints = new Vector<HoughPoint>();
+		replicatedHoughPoints.addAll(houghPoints);
+		
+		// Compute maximal values and range of angles
+		double maxAngular = -Math.PI/2;
+		double minAngular = -maxAngular;
+		
+		for (HoughPoint p : houghPoints) {
+			if (p.theta > maxAngular)
+				maxAngular = p.theta;
+			else if (p.theta < minAngular)
+				minAngular = p.theta;
+		}
+		
+		double angularRange = maxAngular - minAngular;
+		
+		// Add symmetric points
+		for (HoughPoint p : houghPoints) {
+			if (Double.compare(p.theta, maxAngular - 5.0*angularBandwidth) >= 0)
+				replicatedHoughPoints.add(new HoughPoint(p.theta-angularRange, -p.rho));
+			else if (Double.compare(p.theta, maxAngular + 5.0*angularBandwidth) <= 0)
+				replicatedHoughPoints.add(new HoughPoint(p.theta+angularRange, -p.rho));
+		}
+		
+		return replicatedHoughPoints;
 	}
 	
 	/**
