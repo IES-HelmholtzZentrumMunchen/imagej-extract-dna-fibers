@@ -72,79 +72,19 @@ public class MeanShiftTest {
 	@Before
 	public void setUp() throws Exception {
 		// Declare a buffer for file reading
-		BufferedReader buffer;
+//		BufferedReader buffer;
 		
 		// Build a standard mean-shift
 		this.process = new MeanShift(new GaussianKernel(), new HoughPoint(0.6, 0.6));
 		
 		// Read data files and fill the data point list
-		this.data = new Vector<HoughPoint>();
-		
-		buffer = null;
-		try {
-			String line = "";
-			
-			buffer = new BufferedReader(new FileReader(this.testPath + this.dataFile));
-			
-			while((line = buffer.readLine()) != null) {
-				String[] coordinates = line.split(this.csvSeparator);
-				this.data.add(new HoughPoint(Double.parseDouble(coordinates[0]), Double.parseDouble(coordinates[1])));
-			}
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-		finally {
-			if (buffer != null) {
-				buffer.close();
-			}
-		}
+		this.data = CsvManager.readHoughPoints(this.testPath+this.dataFile, this.csvSeparator);
 		
 		// Read modes files and fill the modes point list
-		this.modes = new Vector<HoughPoint>();
-		
-		buffer = null;
-		try {
-			String line = "";
-					
-			buffer = new BufferedReader(new FileReader(this.testPath + this.modeFile));
-					
-			while((line = buffer.readLine()) != null) {
-				String[] coordinates = line.split(this.csvSeparator);
-				this.modes.add(new HoughPoint(Double.parseDouble(coordinates[0]), Double.parseDouble(coordinates[1])));
-			}
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-		finally {
-			if (buffer != null) {
-				buffer.close();
-			}
-		}
+		this.modes = CsvManager.readHoughPoints(this.testPath+this.modeFile, this.csvSeparator);
 		
 		// Read labels files and fill the labels point list
-		this.labels = new Vector<Integer>();
-
-		buffer = null;
-		try {
-			String line = "";
-
-			buffer = new BufferedReader(new FileReader(this.testPath + this.labelsFile));
-
-			while((line = buffer.readLine()) != null) {
-				String[] coordinate = line.split(this.csvSeparator);
-				this.labels.add(Integer.parseInt(coordinate[0]));
-			}
-		}
-		catch (IOException e) {
-			e.printStackTrace();
-		}
-		finally {
-			if (buffer != null) {
-				buffer.close();
-			}
-		}
+		this.labels = CsvManager.readIntegers(this.testPath+this.labelsFile, this.csvSeparator);
 	}
 
 	/**
