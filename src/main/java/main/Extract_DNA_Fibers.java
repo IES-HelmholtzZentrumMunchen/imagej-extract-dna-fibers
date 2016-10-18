@@ -143,14 +143,34 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	 * @return Selection of points in Hough space based on number of contributing points in neighborhood.
 	 */
 	public static List<HoughPoint> selectHoughPoints(List<HoughPoint> houghPoints, double selectionSensitivity, double angularSensitivity, double thicknessSensitivity) {
+		// Manage borders
 		List<HoughPoint> replicatedHoughPoints = Extract_DNA_Fibers.replicateHoughSpaceBorders(houghPoints, angularSensitivity, Math.PI/2.0, -Math.PI/2.0, true);
 		
+		// Find modes
 		MeanShift modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint(angularSensitivity*Math.PI/180.0, thicknessSensitivity));
 		modesFinder.runWith(replicatedHoughPoints);
+		List<HoughPoint> modes = modesFinder.getModes();
+		List<Integer>   labels = modesFinder.getLabels();
 		
-		// TODO select points (condition: percentage of the maximal number of participating points)
+		// Get counts and maximal count
+		Integer[] counts = new Integer[modes.size()];
+		for (Integer i : labels)
+			counts[i]++;
 		
-		return new Vector<HoughPoint>();
+		int maximalCount = 0;
+		for (Integer count : counts) {
+			if (count > maximalCount)
+				maximalCount = count;
+		}
+		
+		// Select candidate points
+		List<HoughPoint> selectedPoint = new Vector<HoughPoint>();
+		for (int i = 0; i < modes.size(); i++) {
+			if (counts[i] > selectionSensitivity*maximalCount)
+				selectedPoint.add(modes.get(i));
+		}
+		
+		return selectedPoint;
 	}
 	
 	/**
