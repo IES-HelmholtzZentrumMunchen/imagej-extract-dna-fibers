@@ -124,14 +124,84 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		
 		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(houghPoints, selectionSensitivity, angularSensitivity, thicknessSensitivity);
 		
-		List<Line> segments = Extract_DNA_Fibers.buildSegments(skeletons, selectedPoints);
+		List<Line> segments = Extract_DNA_Fibers.buildSegments(skeletons, selectedPoints, 10, 10, 1.0);
 		
 		return segments;
 	}
 	
-	public static List<Line> buildSegments(ImagePlus binary, List<HoughPoint> selectedPoints) {
-		// TODO build segments from binary image and selected points
-		return new Vector<Line>();
+	public static List<Line> buildSegments(ImagePlus binary, List<HoughPoint> selectedPoints, double maxGap, double minLength, double tolerance) {
+		// Precompute
+		double    maxGap2 = maxGap * maxGap;
+		double minLength2 = minLength * minLength;
+		
+		List<Line> segments = new Vector<Line>();
+		
+		// Setup list of foreground pixels' coordinates in coordinate system with origin centered.
+		ImagePoint origin = ImagePoint.getCenterPointOfImage(binary);
+		List<ImagePoint> foregroundPoints = ImagePoint.getImageForegroundPoints(binary, origin);
+				
+		for (HoughPoint peak : selectedPoints) {
+			// Precompute
+			double cosTheta = Math.cos(peak.theta);
+			double sinTheta = Math.sin(peak.theta);
+			
+			// Keep only associated points with that particular peak and compute range
+			List<ImagePoint> associatedPoints = new Vector<ImagePoint>();
+			int minX = 100000, maxX = -100000;
+			int minY = 100000, maxY = -100000;
+			
+			for (ImagePoint p : foregroundPoints) {
+				double rho = p.x * cosTheta + p.y * sinTheta;
+				
+				if (Double.compare(peak.rho-tolerance, rho) <= 0 && Double.compare(rho, peak.rho+tolerance) <= 0){
+					associatedPoints.add(p);
+					
+					if (p.x < minX)
+						minX = p.x;
+					else if (p.x > maxX)
+						maxX = p.x;
+					
+					if (p.y < minY)
+						minY = p.y;
+					else if (p.y > maxY)
+						maxY = p.y;
+				}
+			}
+			
+			// Sort coordinates by in direction of major coordinates change
+			final int factor = (maxX-minX < maxY-minY) ? -1 : 1;
+			
+			associatedPoints.sort((o1,o2) -> {
+				if (o1.x == o2.x)
+					return factor * (o1.y - o2.y);
+				else // o1.x != o2.x
+					return factor * (o1.x - o2.x);
+			});
+			
+			// Creates list of point indices describing gaps
+			List<Integer> indices = new Vector<Integer>();
+			indices.add(-1);
+			
+			for (int i = 1; i < associatedPoints.size(); i++) {
+				double distance = associatedPoints.get(i-1).squaredDistanceToPoint(associatedPoints.get(i));
+
+				if (distance > maxGap2)
+					indices.add(i);
+			}
+			
+			indices.add(associatedPoints.size()-1);
+			
+			// Accumulate segments
+			for (int i = 0; i < indices.size(); i++) {
+				ImagePoint p1 = associatedPoints.get(indices.get(i)+1);
+				ImagePoint p2 = associatedPoints.get(indices.get(i+1));
+				
+				if (Double.compare(p1.squaredDistanceToPoint(p2), minLength2) >= 0)
+					segments.add(new Line(p1.x, p1.y, p2.x, p2.y));
+			}
+		}
+		
+		return segments;
 	}
 	
 	/**

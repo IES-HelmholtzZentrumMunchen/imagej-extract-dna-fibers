@@ -257,6 +257,14 @@ public class Extract_DNA_FibersTest {
 	 */
 	@Test
 	public void testSelectHoughPoints() {
-		
+		// TODO testing for select points function
+//		// Dataset
+//		List<HoughPoint> points = new Vector<HoughPoint>();
+//		points.add(new HoughPoint(1,3)); points.add(new HoughPoint(2,3));
+//		points.add(new HoughPoint(1,-2)); points.add(new HoughPoint(-1,2));
+//		points.add(new HoughPoint(1,2)); points.add(new HoughPoint(1,0));
+//		points.add(new HoughPoint(-3,3)); points.add(new HoughPoint(-1,1));
+//				
+//		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0.33, 2.5, 5);
 	}
 }
