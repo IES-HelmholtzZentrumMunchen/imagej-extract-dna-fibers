@@ -21,6 +21,9 @@ package test;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Vector;
 
@@ -97,5 +100,19 @@ public class CsvManager {
 		}
 		
 		return points;
+	}
+	
+	public static void writeHoughPoints(List<HoughPoint> points, String path, String delimiter) {
+		List<String> lines = new Vector<String>();
+		
+		for (HoughPoint p : points) {
+			lines.add(p.theta + delimiter + p.rho);
+		}
+		
+		try {
+			Files.write(Paths.get(path), lines, Charset.forName("UTF-8"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 }

@@ -81,8 +81,8 @@ public class Extract_DNA_FibersTest {
 	 */
 	@Test @Ignore("Not yet compatible with Travis-CI")
 	public void testExtractSkeletons() {
-		ImagePlus expected = IJ.openImage(testpath + "example_skeletons.zip");
-		ImagePlus original = IJ.openImage(testpath + "example_original.zip");
+		ImagePlus expected = IJ.openImage(this.testpath + "example_skeletons.zip");
+		ImagePlus original = IJ.openImage(this.testpath + "example_original.zip");
 		
 		ImagePlus actual = Extract_DNA_Fibers.extractSkeletons(original, 1, 2, 2);
 //		IJ.save(actual, testpath + "example_skeletons_actual.zip");
@@ -113,10 +113,50 @@ public class Extract_DNA_FibersTest {
 	}
 	
 	/**
+	 * Compute the Hausdorff distance (maximal euclidian distance to closest points) between two lists of points.
+	 * @param points1 First list.
+	 * @param points2 Second list.
+	 * @return Hausdorff distance of the two input lists. 
+	 */
+	public static double computeHausdorffDistance(List<HoughPoint> points1, List<HoughPoint> points2) {
+		double maximalDistance = 0.0;
+		
+		for (HoughPoint p1 : points1) {
+			double thetaDiff = p1.theta - points2.get(0).theta;
+			double   rhoDiff = p1.rho - points2.get(0).rho;
+			
+			double minimalDistance = thetaDiff*thetaDiff + rhoDiff*rhoDiff;
+			
+			for (int i = 1; i < points2.size(); i++) {
+				thetaDiff       = p1.theta - points2.get(i).theta;
+				double distance = thetaDiff * thetaDiff;
+				
+				if (distance < minimalDistance) {
+					rhoDiff  = p1.rho - points2.get(i).rho;
+					distance += rhoDiff * rhoDiff;
+					
+					if (distance < minimalDistance)
+						minimalDistance = distance;
+				}
+			}
+
+			if (minimalDistance > maximalDistance)
+				maximalDistance = minimalDistance;
+		}
+		
+		return Math.sqrt(maximalDistance);
+	}
+	
+	/**
 	 * Test method for {@link Extract_DNA_Fibers#buildHoughSpaceFromSkeletons(ij.ImagePlus, int)}.
+	 * @throws Exception
 	 */
 	@Test
-	public void testBuildHoughSpaceFromSkeletons() {
+	public void testBuildHoughSpaceFromSkeletons() throws Exception {
+		//
+		// Simulations
+		//
+		
 		HoughPoint pexp;
 		ImagePlus skeletons = NewImage.createByteImage("", 16, 16, 1, NewImage.FILL_BLACK);
 		ImageProcessor processor = skeletons.getProcessor();
@@ -140,13 +180,28 @@ public class Extract_DNA_FibersTest {
 		
 		pexp = ImagePoint.convertImagePointsToHoughPoint(new ImagePoint(13, 10).subtract(origin), new ImagePoint(2, 13).subtract(origin));
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, list));
+		
+		
+		//
+		// Real dataset
+		//
+		
+		skeletons = IJ.openImage(this.testpath + "example_skeletons.zip");
+		List<HoughPoint> nearlyExpected = CsvManager.readHoughPoints(this.testpath+"hough_points.csv", ",");
+		
+		List<HoughPoint> points = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 10000);
+//		CsvManager.writeHoughPoints(points, this.testpath+"hough_points.csv", ",");
+		
+		double hausdorffDistance = Extract_DNA_FibersTest.computeHausdorffDistance(nearlyExpected, points);
+		double minHausdorffDistance = 30;
+		assertTrue("Hausdorff distance test failed (expected below <"+minHausdorffDistance+">, actual <"+hausdorffDistance+">).", minHausdorffDistance > hausdorffDistance);
 	}
 	
 	/**
 	 * Test method for {@link Extract_DNA_Fibers#replicateHoughSpaceBorders(java.util.List<coordinates.HoughPoint>, double}
 	 */
 	@Test
-	public void replicateHoughSpaceBorders() {
+	public void testReplicateHoughSpaceBorders() {
 		// Dataset
 		List<HoughPoint> points = new Vector<HoughPoint>();
 		points.add(new HoughPoint(1,3)); points.add(new HoughPoint(2,3));
@@ -195,5 +250,13 @@ public class Extract_DNA_FibersTest {
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
 		pexp = new HoughPoint(-5,-3);
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+	}
+	
+	/**
+	 * Test method for {@link Extract_DNA_Fibers#selectHoughPoints(List, double, double, double)}
+	 */
+	@Test
+	public void testSelectHoughPoints() {
+		
 	}
 }
