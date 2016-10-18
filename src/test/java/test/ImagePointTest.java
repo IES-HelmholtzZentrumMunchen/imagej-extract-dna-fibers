@@ -73,6 +73,72 @@ public class ImagePointTest {
 		p2.setLocation(5, -3);
 		assertEquals(new ImagePoint(7, 8), p1.add(p2));
 	}
+	
+	/**
+	 * Test method for {@link ImagePoint#distanceBetweenPoints(ImagePoint, ImagePoint)}
+	 */
+	@Test
+	public void testDistanceBetweenPoints() {
+		ImagePoint p1 = new ImagePoint(), p2 = new ImagePoint();
+		double distance, expDistance;
+		
+		expDistance = 0.0;
+		distance = ImagePoint.distanceBetweenPoints(p1, p2);
+		assertEquals(expDistance, distance, this.epsilon);
+		
+		p1 = new ImagePoint(1,1); p2 = new ImagePoint(-1,-1);
+		expDistance = 2.0 * Math.sqrt(2.0);
+		distance = ImagePoint.distanceBetweenPoints(p1, p2);
+		assertEquals(expDistance, distance, this.epsilon);
+		
+		p1 = new ImagePoint(1,3); p2 = new ImagePoint(1,2);
+		expDistance = 1.0;
+		distance = ImagePoint.distanceBetweenPoints(p1, p2);
+		assertEquals(expDistance, distance, this.epsilon);
+		
+		p1 = new ImagePoint(-1,-1); p2 = new ImagePoint();
+		expDistance = Math.sqrt(2.0);
+		distance = ImagePoint.distanceBetweenPoints(p1, p2);
+		assertEquals(expDistance, distance, this.epsilon);
+		
+		p1 = new ImagePoint(); p2 = new ImagePoint(0,100);
+		expDistance = 100.0;
+		distance = ImagePoint.distanceBetweenPoints(p1, p2);
+		assertEquals(expDistance, distance, this.epsilon);
+	}
+	
+	/**
+	 * Test method for {@link ImagePoint#squaredDistanceBetweenPoints(ImagePoint, ImagePoint)}
+	 */
+	@Test
+	public void testSquaredDistanceBetweenPoints() {
+		ImagePoint p1 = new ImagePoint(), p2 = new ImagePoint();
+		double distance, expDistance;
+		
+		expDistance = 0.0;
+		distance = ImagePoint.squaredDistanceBetweenPoints(p1, p2);
+		assertEquals(expDistance, distance, this.epsilon);
+		
+		p1 = new ImagePoint(1,1); p2 = new ImagePoint(-1,-1);
+		expDistance = 8.0;
+		distance = ImagePoint.squaredDistanceBetweenPoints(p1, p2);
+		assertEquals(expDistance, distance, this.epsilon);
+		
+		p1 = new ImagePoint(1,3); p2 = new ImagePoint(1,2);
+		expDistance = 1.0;
+		distance = ImagePoint.squaredDistanceBetweenPoints(p1, p2);
+		assertEquals(expDistance, distance, this.epsilon);
+		
+		p1 = new ImagePoint(-1,-1); p2 = new ImagePoint();
+		expDistance = 2.0;
+		distance = ImagePoint.squaredDistanceBetweenPoints(p1, p2);
+		assertEquals(expDistance, distance, this.epsilon);
+		
+		p1 = new ImagePoint(); p2 = new ImagePoint(0,100);
+		expDistance = 10000.0;
+		distance = ImagePoint.squaredDistanceBetweenPoints(p1, p2);
+		assertEquals(expDistance, distance, this.epsilon);
+	}
 
 	/**
 	 * Test method for {@link ImagePoint#convertImagePointsToHoughPointImagePointImagePoint(ImagePoint, ImagePoint)}.

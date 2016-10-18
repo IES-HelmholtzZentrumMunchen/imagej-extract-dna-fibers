@@ -126,6 +126,47 @@ public class ImagePoint extends Point2D {
 	}
 	
 	/**
+	 * Compute euclidian distance between two points. 
+	 * @param p1 First input point.
+	 * @param p2 Second input point.
+	 * @return Euclidian distance between input points.
+	 */
+	public static double distanceBetweenPoints(ImagePoint p1, ImagePoint p2) {
+		return Math.sqrt(ImagePoint.squaredDistanceBetweenPoints(p1, p2));
+	}
+	
+	/**
+	 * Compute euclidian squared distance between two points. 
+	 * @param p1 First input point.
+	 * @param p2 Second input point.
+	 * @return Euclidian squared distance between input points.
+	 */
+	public static double squaredDistanceBetweenPoints(ImagePoint p1, ImagePoint p2) {
+		double diffX = p1.x - p2.x;
+		double diffY = p1.y - p2.y;
+		
+		return diffX*diffX + diffY*diffY;
+	}
+	
+	/**
+	 * Compute euclidian distance of this point to the input.
+	 * @param p Input point.
+	 * @return Euclidian distance between this point and the input point.
+	 */
+	public double squaredDistanceToPoint(ImagePoint p) {
+		return ImagePoint.squaredDistanceBetweenPoints(this, p);
+	}
+	
+	/**
+	 * Compute euclidian distance of this point to the input.
+	 * @param p Input point.
+	 * @return Euclidian distance between this point and the input point.
+	 */
+	public double distanceToPoint(ImagePoint p) {
+		return ImagePoint.distanceBetweenPoints(this, p);
+	}
+	
+	/**
 	 * Compute the Hough representation of the line going through input image points.
 	 * 
 	 * Two image points are enough to build a line and express this line in the Hough space.
