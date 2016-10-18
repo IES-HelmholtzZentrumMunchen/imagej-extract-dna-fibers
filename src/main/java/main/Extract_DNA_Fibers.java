@@ -71,10 +71,13 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	/** The number of couple of points to sample in image space. */
 	protected int numberOfPoints = 1000;
 	
-	/** The angular sensitivity (bandwidth on theta axis in Hough space). */
+	/** The sensitivity of candidate points selection. */
+	protected double selectionSensitivity = 0.33;
+	
+	/** The angular sensitivity (in degrees, bandwidth on theta axis in Hough space). */
 	protected double angularSensitivity = 2.5;
 	
-	/** The thickness sensitivity (bandwidth on rho axis in Hough space). */
+	/** The thickness sensitivity (in pixels, bandwidth on rho axis in Hough space). */
 	protected double thicknessSensitivity = 5;
 
 	/**
@@ -97,7 +100,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	public void run(ImageProcessor ip) {
 		if (this.showAndCheckDialog()) {
 			Extract_DNA_Fibers.detectFibers(this.image, this.thickness, this.firstChannel, 
-					this.secondChannel, this.angularSensitivity, this.thicknessSensitivity);
+					this.secondChannel, this.selectionSensitivity, this.angularSensitivity, this.thicknessSensitivity);
 		}
 	}
 	
@@ -107,22 +110,47 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	 * @param thickness Thickness in pixels of the fibers.
 	 * @param startSlice Project from this channel.
 	 * @param endSlice Project until this channel.
-	 * @return A vector of segments as Line ROI.
+	 * @param angularSensitivity Soft threshold for angle (in degrees).
+	 * @param thicknessSensitivity Soft threshold for line thickness (in pixels).
+	 * @param selectionSensitivity Sensitivity to selection of candidates points (in [0,1]).
+	 * @return A list of segments as Line ROI.
 	 */
-	public static Vector<Line> detectFibers(ImagePlus input, double thickness, int startSlice, 
-			int endSlice, double angularSensitivity, double thicknessSensitivity) {
+	public static List<Line> detectFibers(ImagePlus input, double thickness, int startSlice, 
+			int endSlice, double angularSensitivity, double thicknessSensitivity, double selectionSensitivity) {
 		ImagePlus skeletons = Extract_DNA_Fibers.extractSkeletons(input, startSlice, endSlice, thickness);
 		skeletons.setTitle("Skeletons image");
 		
 		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 1000);
 		
+		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(houghPoints, selectionSensitivity, angularSensitivity, thicknessSensitivity);
+		
+		List<Line> segments = Extract_DNA_Fibers.buildSegments(skeletons, selectedPoints);
+		
+		return segments;
+	}
+	
+	public static List<Line> buildSegments(ImagePlus binary, List<HoughPoint> selectedPoints) {
+		// TODO build segments from binary image and selected points
+		return new Vector<Line>();
+	}
+	
+	/**
+	 * Select points among candidates in Hough space based on neighborhood count.
+	 * @param houghPoints Input points in Hough space.
+	 * @param selectionSensitivity Sensitivity to selection of candidates points (in [0,1]).
+	 * @param angularSensitivity Soft threshold for angle (in degrees).
+	 * @param thicknessSensitivity Soft threshold for line thickness (in pixels).
+	 * @return Selection of points in Hough space based on number of contributing points in neighborhood.
+	 */
+	public static List<HoughPoint> selectHoughPoints(List<HoughPoint> houghPoints, double selectionSensitivity, double angularSensitivity, double thicknessSensitivity) {
 		List<HoughPoint> replicatedHoughPoints = Extract_DNA_Fibers.replicateHoughSpaceBorders(houghPoints, angularSensitivity, Math.PI/2.0, -Math.PI/2.0, true);
-		MeanShift                  modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint(angularSensitivity*Math.PI/180.0, thicknessSensitivity));
+		
+		MeanShift modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint(angularSensitivity*Math.PI/180.0, thicknessSensitivity));
 		modesFinder.runWith(replicatedHoughPoints);
 		
-		// TODO #4 Build segments (detect pixels along lines and break them into segments; needs: a. foreground coordinates selector)
+		// TODO select points (condition: percentage of the maximal number of participating points)
 		
-		return new Vector<Line>();
+		return new Vector<HoughPoint>();
 	}
 	
 	/**
@@ -273,6 +301,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		gd.addNumericField("Start at channel", this.firstChannel, 0, number_of_columns, "");
 		gd.addNumericField("End at channel", this.secondChannel, 0, number_of_columns, "");
 		gd.addNumericField("Number of samples", this.numberOfPoints, 0, number_of_columns, "");
+		gd.addNumericField("Selection sensitivity", this.selectionSensitivity, 2, number_of_columns, "");
 		gd.addNumericField("Thickness sensitivity", this.thicknessSensitivity, 1, number_of_columns, "pixels");
 		gd.addNumericField("Angular sensitivity", this.angularSensitivity, 1, number_of_columns, "degrees");
 
@@ -283,6 +312,8 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		this.thickness            = gd.getNextNumber();
 		this.firstChannel         = (int)gd.getNextNumber();
 		this.secondChannel        = (int)gd.getNextNumber();
+		this.numberOfPoints       = (int)gd.getNextNumber();
+		this.selectionSensitivity = gd.getNextNumber();
 		this.thicknessSensitivity = gd.getNextNumber();
 		this.angularSensitivity   = gd.getNextNumber();
 
@@ -312,6 +343,10 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 				IJ.error("Input error", "Angular sensitivity must be greater than zero!");
 			else if (Double.compare(this.thicknessSensitivity, 0.0) <= 0)
 				IJ.error("Input error", "Thickness sensitivity must be greater than zero!");
+			else if (Double.compare(this.selectionSensitivity, 0.0) <= 0)
+				IJ.error("Input error", "Selection sensitivity must be greater than zero!");
+			else if (Double.compare(this.selectionSensitivity, 0.0) >= 1)
+				IJ.error("Input error", "Selection sensitivity must be lesser than one!");
 			else
 				checked = true;
 			
