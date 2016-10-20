@@ -49,6 +49,14 @@ public class EpanechnikovKernelTest {
 	public void testGetNormConst() {
 		assertEquals(0.75, this.kernel.getNormConst(), 1e-7);
 	}
+	
+	/**
+	 * Test method for {@link kernel.EpanechnikovKernel#getMaxDomain()}.
+	 */
+	@Test
+	public void testGetMaxDomain() {
+		assertEquals(1.0, this.kernel.getMaxDomain(), 1e-7);
+	}
 
 	/**
 	 * Test method for {@link kernel.EpanechnikovKernel#evaluate(double)}.

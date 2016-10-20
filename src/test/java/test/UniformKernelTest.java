@@ -49,6 +49,14 @@ public class UniformKernelTest {
 	public void testGetNormConst() {
 		assertEquals(0.5, this.kernel.getNormConst(), 1e-7);
 	}
+	
+	/**
+	 * Test method for {@link kernel.UniformKernel#getMaxDomain()}.
+	 */
+	@Test
+	public void testGetMaxDomain() {
+		assertEquals(1.0, this.kernel.getMaxDomain(), 1e-7);
+	}
 
 	/**
 	 * Test method for {@link kernel.UniformKernel#evaluate(double)}.

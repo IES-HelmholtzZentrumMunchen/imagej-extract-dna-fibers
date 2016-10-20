@@ -25,6 +25,9 @@ package kernel;
 public class EpanechnikovKernel extends Kernel {
 	/** Normalization constant of the Epanechnikov kernel. */
 	public static final double normConst = 0.75;
+	
+	/** Max domain value. */
+	public static final double maxDomain = 1.0;
 
 	/**
 	 * @see hough.Kernel#getNormConst()
@@ -32,6 +35,14 @@ public class EpanechnikovKernel extends Kernel {
 	@Override
 	public double getNormConst() {
 		return EpanechnikovKernel.normConst;
+	}
+	
+	/**
+	 * @see kernel.Kernel#getMaxDomain()
+	 */
+	@Override
+	public double getMaxDomain() {
+		return EpanechnikovKernel.maxDomain;
 	}
 
 	/**

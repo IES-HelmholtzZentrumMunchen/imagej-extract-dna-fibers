@@ -26,12 +26,23 @@ public class GaussianKernel extends Kernel {
 	/** Normalization constant of the Gaussian kernel. */
 	public static final double normConst = 1.0/Math.sqrt(2*Math.PI);
 	
+	/** Max domain value. */
+	public static final double maxDomain = 5.0;
+	
 	/**
 	 * @see kernel.Kernel#getNormConst()
 	 */
 	@Override
 	public double getNormConst() {
 		return GaussianKernel.normConst;
+	}
+	
+	/**
+	 * @see kernel.Kernel#getMaxDomain()
+	 */
+	@Override
+	public double getMaxDomain() {
+		return GaussianKernel.maxDomain;
 	}
 
 	/**

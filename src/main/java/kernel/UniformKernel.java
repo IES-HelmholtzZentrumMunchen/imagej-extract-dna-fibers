@@ -26,12 +26,23 @@ public class UniformKernel extends Kernel {
 	/** Normalization constant of the uniform kernel. */
 	public static final double normConst = 0.5;
 	
+	/** Max domain value.*/
+	public static final double maxDomain = 1.0;
+	
 	/**
 	 * @see kernel.Kernel#getNormConst()
 	 */
 	@Override
 	public double getNormConst() {
 		return UniformKernel.normConst;
+	}
+	
+	/**
+	 * @see kernel.Kernel#getMaxDomain()
+	 */
+	@Override
+	public double getMaxDomain() {
+		return UniformKernel.maxDomain;
 	}
 
 	/**

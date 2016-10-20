@@ -49,6 +49,14 @@ public class GaussianKernelTest {
 	public void testGetNormConst() {
 		assertEquals(1.0/Math.sqrt(2*Math.PI), this.kernel.getNormConst(), 1e-7);
 	}
+	
+	/**
+	 * Test method for {@link kernel.GaussianKernel#getMaxDomain()}.
+	 */
+	@Test
+	public void testGetMaxDomain() {
+		assertEquals(5.0, this.kernel.getMaxDomain(), 1e-7);
+	}
 
 	/**
 	 * Test method for {@link kernel.GaussianKernel#evaluate(double)}.

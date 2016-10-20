@@ -30,6 +30,14 @@ public abstract class Kernel {
 	public abstract double getNormConst();
 	
 	/**
+	 * Get the maximal domain value of the kernel.
+	 * Above this value, the kernel is not defined
+	 * or set to zero.
+	 * @return The maximal domain value.
+	 */
+	public abstract double getMaxDomain();
+	
+	/**
 	 * Evaluate the kernel at <code>u</code>.
 	 * @param u Point where to evaluate the kernel.
 	 * @return Kernel value at <code>u</code>.
