@@ -61,6 +61,17 @@ public class GaussianKernelTest {
 		assertEquals(1.0/Math.sqrt(2*Math.PI)*Math.exp(-2), this.kernel.getNormConst()*this.kernel.evaluate(2), 1e-7);
 		assertEquals(1.0/Math.sqrt(2*Math.PI)*Math.exp(-24.5), this.kernel.getNormConst()*this.kernel.evaluate(-7), 1e-7);
 	}
+	
+	/**
+	 * Test method for {@link kernel.GaussianKernel#evaluateSquared(double)}.
+	 */
+	@Test
+	public void testEvaluateSquared() {
+		assertEquals(1.0/Math.sqrt(2*Math.PI), this.kernel.getNormConst()*this.kernel.evaluateSquared(0), 1e-7);
+		assertEquals(1.0/Math.sqrt(2*Math.PI)*Math.exp(-0.125), this.kernel.getNormConst()*this.kernel.evaluateSquared(0.25), 1e-7);
+		assertEquals(1.0/Math.sqrt(2*Math.PI)*Math.exp(-2), this.kernel.getNormConst()*this.kernel.evaluateSquared(4), 1e-7);
+		assertEquals(1.0/Math.sqrt(2*Math.PI)*Math.exp(-24.5), this.kernel.getNormConst()*this.kernel.evaluateSquared(49), 1e-7);
+	}
 
 	/**
 	 * Test method for {@link kernel.GaussianKernel#derivative(double)}.

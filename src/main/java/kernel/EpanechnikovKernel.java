@@ -44,6 +44,14 @@ public class EpanechnikovKernel extends Kernel {
 		else
 			return 0.0;
 	}
+	
+	/**
+	 * @see hough.Kernel#evaluateSquared(double)
+	 */
+	@Override
+	public double evaluateSquared(double u2) {
+		return this.evaluate(Math.sqrt(u2));
+	}
 
 	/**
 	 * @see hough.Kernel#derivative(double)

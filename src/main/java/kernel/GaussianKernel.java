@@ -39,7 +39,15 @@ public class GaussianKernel extends Kernel {
 	 */
 	@Override
 	public double evaluate(double u) {
-		return Math.exp(-0.5 * u * u);
+		return this.evaluateSquared(u * u);
+	}
+	
+	/**
+	 * @see kernel.Kernel#evaluateSquared(double)
+	 */
+	@Override
+	public double evaluateSquared(double u2) {
+		return Math.exp(-0.5 * u2);
 	}
 
 	/**

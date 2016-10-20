@@ -44,6 +44,14 @@ public class UniformKernel extends Kernel {
 		else
 			return 0.0;
 	}
+	
+	/**
+	 * @see kernel.Kernel#evaluateSquared(java.lang.Double)
+	 */
+	@Override
+	public double evaluateSquared(double u2) {
+		return this.evaluate(Math.sqrt(u2));
+	}
 
 	/**
 	 * @see kernel.Kernel#derivative(java.lang.Double)

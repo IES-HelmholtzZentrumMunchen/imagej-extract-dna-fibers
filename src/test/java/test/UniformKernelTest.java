@@ -62,6 +62,17 @@ public class UniformKernelTest {
 		assertEquals(0, this.kernel.getNormConst()*this.kernel.evaluate(-1.1), 1e-7);
 		assertEquals(0, this.kernel.getNormConst()*this.kernel.evaluate(1.1), 1e-7);
 	}
+	
+	/**
+	 * Test method for {@link kernel.UniformKernel#evaluateSquared(double)}.
+	 */
+	@Test
+	public void testEvaluateSquared() {
+		assertEquals(0.5, this.kernel.getNormConst()*this.kernel.evaluateSquared(0), 1e-7);
+		assertEquals(0.5, this.kernel.getNormConst()*this.kernel.evaluateSquared(0.25), 1e-7);
+		assertEquals(0, this.kernel.getNormConst()*this.kernel.evaluateSquared(4), 1e-7);
+		assertEquals(0, this.kernel.getNormConst()*this.kernel.evaluateSquared(1.21), 1e-7);
+	}
 
 	/**
 	 * Test method for {@link kernel.UniformKernel#derivative(double)}.

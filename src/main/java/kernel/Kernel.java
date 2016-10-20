@@ -37,6 +37,13 @@ public abstract class Kernel {
 	public abstract double evaluate(double u);
 	
 	/**
+	 * Evaluate the kernel at <code>u^2</code>.
+	 * @param u Point where to evaluate the kernel.
+	 * @return Kernel value at <code>u^2</code>.
+	 */
+	public abstract double evaluateSquared(double u2);
+	
+	/**
 	 * Evaluate the kernel derivative at <code>u</code>.
 	 * @param u Point where to evaluate the kernel derivative.
 	 * @return Kernel derivative value at <code>u</code>.
