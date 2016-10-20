@@ -21,6 +21,7 @@
 package main;
 
 import java.awt.geom.Point2D;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Vector;
@@ -213,17 +214,23 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	 * @return Selection of points in Hough space based on number of contributing points in neighborhood.
 	 */
 	public static List<HoughPoint> selectHoughPoints(List<HoughPoint> houghPoints, double selectionSensitivity, double angularSensitivity, double thicknessSensitivity) {
+		// Compute range and bandwidths
+		double       minValue = -Math.PI/2.0;
+		double       maxValue = Math.PI/2.0;
+		double thetaBandwidth = angularSensitivity * Math.PI/180.0;
+		double   rhoBandwidth = thicknessSensitivity;
+		
 		// Manage borders
-		List<HoughPoint> replicatedHoughPoints = Extract_DNA_Fibers.replicateHoughSpaceBorders(houghPoints, angularSensitivity, Math.PI/2.0, -Math.PI/2.0, true);
+		List<HoughPoint> replicatedHoughPoints = Extract_DNA_Fibers.replicateHoughSpaceBorders(houghPoints, thetaBandwidth, maxValue, minValue, true);
 		
 		// Find modes
-		MeanShift modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint(angularSensitivity*Math.PI/180.0, thicknessSensitivity));
+		MeanShift modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint(thetaBandwidth, rhoBandwidth));
 		modesFinder.runWith(replicatedHoughPoints);
 		List<HoughPoint> modes = modesFinder.getModes();
 		List<Integer>   labels = modesFinder.getLabels();
 		
 		// Get counts and maximal count
-		Integer[] counts = new Integer[modes.size()];
+		int[] counts = new int[modes.size()];
 		for (Integer i : labels)
 			counts[i]++;
 		
@@ -231,12 +238,13 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		for (Integer count : counts) {
 			if (count > maximalCount)
 				maximalCount = count;
-		}
+		} 
 		
-		// Select candidate points
+		// Select candidate points (keep points within range)
 		List<HoughPoint> selectedPoint = new Vector<HoughPoint>();
 		for (int i = 0; i < modes.size(); i++) {
-			if (counts[i] > selectionSensitivity*maximalCount)
+			if (counts[i] > selectionSensitivity*maximalCount &&
+				Double.compare(modes.get(i).theta, minValue) > 0 && Double.compare(modes.get(i).theta, maxValue) < 0)
 				selectedPoint.add(modes.get(i));
 		}
 		
@@ -269,7 +277,8 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		for (HoughPoint p : houghPoints) {
 			if (Double.compare(p.theta, supBound - 5.0*angularBandwidth) >= 0)
 				replicatedHoughPoints.add(new HoughPoint(p.theta-angularRange, factor*p.rho));
-			else if (Double.compare(p.theta, infBound + 5.0*angularBandwidth) <= 0)
+			
+			if (Double.compare(p.theta, infBound + 5.0*angularBandwidth) <= 0)
 				replicatedHoughPoints.add(new HoughPoint(p.theta+angularRange, factor*p.rho));
 		}
 		

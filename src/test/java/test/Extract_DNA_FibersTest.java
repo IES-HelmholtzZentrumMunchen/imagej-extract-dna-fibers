@@ -231,8 +231,16 @@ public class Extract_DNA_FibersTest {
 
 		for (HoughPoint p : points)
 			assertTrue(Extract_DNA_FibersTest.containsPoint(p, rep));
-		
+
 		pexp = new HoughPoint(-4,-3);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(-5,-3);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(-5,2);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(-5,0);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
+		pexp = new HoughPoint(-5,2);
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
 		pexp = new HoughPoint(3,-3);
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
@@ -240,31 +248,72 @@ public class Extract_DNA_FibersTest {
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
 		pexp = new HoughPoint(5,-2);
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
-		pexp = new HoughPoint(-5,2);
-		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
-		pexp = new HoughPoint(-5,2);
-		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
-		pexp = new HoughPoint(-5,-0);
-		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
-		pexp = new HoughPoint(-5,-2);
-		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
-		pexp = new HoughPoint(-5,-3);
-		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, rep));
 	}
 	
 	/**
 	 * Test method for {@link Extract_DNA_Fibers#selectHoughPoints(List, double, double, double)}
+	 * @throws Exception 
 	 */
 	@Test
-	public void testSelectHoughPoints() {
-		// TODO testing for select points function
-//		// Dataset
-//		List<HoughPoint> points = new Vector<HoughPoint>();
-//		points.add(new HoughPoint(1,3)); points.add(new HoughPoint(2,3));
-//		points.add(new HoughPoint(1,-2)); points.add(new HoughPoint(-1,2));
-//		points.add(new HoughPoint(1,2)); points.add(new HoughPoint(1,0));
-//		points.add(new HoughPoint(-3,3)); points.add(new HoughPoint(-1,1));
-//				
-//		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0.33, 2.5, 5);
+	public void testSelectHoughPoints() throws Exception {
+		//
+		// Simulations
+		//
+
+		List<HoughPoint> points = new Vector<HoughPoint>();
+		points.add(new HoughPoint(0.5235988,1.5707963)); points.add(new HoughPoint(1.0471976,1.5707963));
+		points.add(new HoughPoint(0.5235988,-1.0471976)); points.add(new HoughPoint(-0.5235988,1.0471976));
+		points.add(new HoughPoint(0.5235988,1.0471976)); points.add(new HoughPoint(0.5235988,0.0000000));
+		points.add(new HoughPoint(-1.5707963,1.5707963)); points.add(new HoughPoint(-0.5235988,0.5235988));
+				
+		
+		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0, 15, 5);
+		
+		assertEquals(2, selectedPoints.size());
+		
+		HoughPoint pexp = new HoughPoint(0.5432863040783672,0.4442325167962235);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, selectedPoints));
+
+		pexp = new HoughPoint(-0.5230785237502429,0.7852813925141692);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, selectedPoints));
+		
+		
+		selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0, 30, 5);
+		
+		assertEquals(1, selectedPoints.size());
+		
+		pexp = new HoughPoint(0.5805149025745342,0.5140943853182574);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, selectedPoints));
+		
+		
+		selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0, 2.5, 5);
+		
+		assertEquals(4, selectedPoints.size());
+		
+		pexp = new HoughPoint(0.5235988,0.39850718301113264);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, selectedPoints));
+
+		pexp = new HoughPoint(1.0471976,1.5707963);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, selectedPoints));
+		
+		pexp = new HoughPoint(-0.5235988,0.7853982053946021);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, selectedPoints));
+
+		pexp = new HoughPoint(-1.5707963,1.5707963);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, selectedPoints));
+		
+		
+//		//
+//		// Real dataset
+//		//
+//		
+//		points = CsvManager.readHoughPoints(this.testpath+"hough_points.csv", ",");
+//		
+//		selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0, 2.5, 5);
+//		CsvManager.writeHoughPoints(selectedPoints, this.testpath+"selected_points.csv", ",");
+//		
+//		double hausdorffDistance = Extract_DNA_FibersTest.computeHausdorffDistance(nearlyExpected, points);
+//		double minHausdorffDistance = 30;
+//		assertTrue("Hausdorff distance test failed (expected below <"+minHausdorffDistance+">, actual <"+hausdorffDistance+">).", minHausdorffDistance > hausdorffDistance);
 	}
 }
