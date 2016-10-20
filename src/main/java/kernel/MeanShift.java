@@ -272,7 +272,7 @@ public class MeanShift {
 		double x = (p.getX() - q.getX()) / this.h.getX();
 		double y = (p.getY() - q.getY()) / this.h.getY();
 		
-		return this.k.evaluate(Math.sqrt(x*x + y*y));
+		return this.k.evaluateSquared(x*x + y*y);
 	}
 	
 	/**
