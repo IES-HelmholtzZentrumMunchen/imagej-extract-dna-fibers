@@ -306,17 +306,19 @@ public class Extract_DNA_FibersTest {
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, selectedPoints));
 		
 		
-//		//
-//		// Real dataset
-//		//
-//		
-//		points = CsvManager.readHoughPoints(this.testpath+"hough_points.csv", ",");
-//		
-//		selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0, 2.5, 5);
+		//
+		// Real dataset
+		//
+		
+		points = CsvManager.readHoughPoints(this.testpath+"hough_points_lowsample.csv", ",");
+		List<HoughPoint> expectedPoints = CsvManager.readHoughPoints(this.testpath+"selected_points.csv", ",");
+		
+		selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0.33, 2.5, 5);
 //		CsvManager.writeHoughPoints(selectedPoints, this.testpath+"selected_points.csv", ",");
-//		
-//		double hausdorffDistance = Extract_DNA_FibersTest.computeHausdorffDistance(nearlyExpected, points);
-//		double minHausdorffDistance = 30;
-//		assertTrue("Hausdorff distance test failed (expected below <"+minHausdorffDistance+">, actual <"+hausdorffDistance+">).", minHausdorffDistance > hausdorffDistance);
+		
+		assertEquals(expectedPoints.size(), selectedPoints.size());
+		
+		for (HoughPoint p : selectedPoints)
+			assertTrue(p+" is not contained in expected list", Extract_DNA_FibersTest.containsPoint(p, expectedPoints));
 	}
 }
