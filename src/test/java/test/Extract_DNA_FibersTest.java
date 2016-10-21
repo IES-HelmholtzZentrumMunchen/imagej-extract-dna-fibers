@@ -269,12 +269,15 @@ public class Extract_DNA_FibersTest {
 		
 		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0, 15, 5);
 		
-		assertEquals(2, selectedPoints.size());
-		
-		HoughPoint pexp = new HoughPoint(0.5432863040783672,0.4442325167962235);
+		assertEquals(3, selectedPoints.size());
+
+		HoughPoint pexp = new HoughPoint(0.5433148078406361,0.4444145062305863);
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, selectedPoints));
 
-		pexp = new HoughPoint(-0.5230785237502429,0.7852813925141692);
+		pexp = new HoughPoint(-0.5235988,0.7853982053946021);
+		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, selectedPoints));
+		
+		pexp = new HoughPoint(1.4399509862664805,-0.7857240764529543);
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, selectedPoints));
 		
 		
@@ -282,7 +285,7 @@ public class Extract_DNA_FibersTest {
 		
 		assertEquals(1, selectedPoints.size());
 		
-		pexp = new HoughPoint(0.5805149025745342,0.5140943853182574);
+		pexp = new HoughPoint(0.579964441507301,0.5143353639215483);
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, selectedPoints));
 		
 		
