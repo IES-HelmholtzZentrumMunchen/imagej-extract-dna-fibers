@@ -71,9 +71,6 @@ public class MeanShiftTest {
 	 */
 	@Before
 	public void setUp() throws Exception {
-		// Declare a buffer for file reading
-//		BufferedReader buffer;
-		
 		// Build a standard mean-shift
 		this.process = new MeanShift(new GaussianKernel(), new HoughPoint(0.6, 0.6));
 		
@@ -111,6 +108,6 @@ public class MeanShiftTest {
 		assertEquals(this.labels.size(), labels.size());
 		
 		for (int i = 0; i < labels.size(); i++)
-			assertEquals("element " + i + ": ", this.labels.get(i), labels.get(i));
+			assertEquals("element " + i+1 + ": ", this.labels.get(i), labels.get(i));
 	}
 }

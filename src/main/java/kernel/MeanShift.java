@@ -55,7 +55,7 @@ public class MeanShift {
 	protected final double tolerance = 1e-10;
 	
 	/** Numerical precision for merging close modes. */
-	protected final double mergeEpsilon = 1e-3;
+	protected final double mergeEpsilon = 1e-2;
 	
 	/** Maximum number of iterations for mean shift convergence. */
 	protected final int max_iterations = 1000;
@@ -167,12 +167,14 @@ public class MeanShift {
 						double x = 0.0, y = 0.0;
 
 						for (HoughPoint q : data) {
-							// TODO do not process points outside of kernel domain
 //							double weight = this.kernelDerivative(p, q);
 							double weight = this.kernel(p, q);
-							sumOfWeights += weight;
-							x += q.getX() * weight;
-							y += q.getY() * weight;
+							
+							if (Double.compare(weight, 0.0) > 0) {
+								sumOfWeights += weight;
+								x += q.getX() * weight;
+								y += q.getY() * weight;
+							}
 						}
 
 						HoughPoint mean = new HoughPoint(x/sumOfWeights, y/sumOfWeights);
@@ -269,10 +271,24 @@ public class MeanShift {
 	 * @return Kernel distance between the two specified points <code>p</code> and <code>q</code>.
 	 */
 	protected double kernel(HoughPoint p, HoughPoint q) {
-		double x = (p.getX() - q.getX()) / this.h.getX();
-		double y = (p.getY() - q.getY()) / this.h.getY();
+//		double x = (p.getX() - q.getX()) / this.h.getX();
+//		double y = (p.getY() - q.getY()) / this.h.getY();
+//		
+//		return this.k.evaluateSquared(x*x + y*y);
+		// Compute kernel only for close points
+		// Use partial distance to speed up the process
+		double  x = (p.getX() - q.getX()) / this.h.getX();
+		double x2 = x*x;
 		
-		return this.k.evaluateSquared(x*x + y*y);
+		if (Double.compare(x2, this.k.getMaxDomain()) < 0) { // x < 5
+			double y = (p.getY() - q.getY()) / this.h.getY();
+			double u = x2 + y*y;
+			
+			if (Double.compare(u, this.k.getMaxDomain()) < 0) 
+				return this.k.evaluateSquared(u);
+		}
+
+		return 0.0;
 	}
 	
 	/**
