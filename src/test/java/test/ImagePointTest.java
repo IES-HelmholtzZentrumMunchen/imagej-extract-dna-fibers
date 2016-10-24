@@ -22,6 +22,7 @@ import static org.junit.Assert.*;
 
 import java.util.List;
 import java.util.Random;
+import java.util.Vector;
 
 import org.junit.Test;
 
@@ -55,6 +56,42 @@ public class ImagePointTest {
 	}
 	
 	/**
+	 * Test method for {@link ImagePoint#subtractTo(List)
+	 */
+	@Test
+	public void testSubtractTo() {
+		List<ImagePoint> initialList = new Vector<>();
+		initialList.add(new ImagePoint()); initialList.add(new ImagePoint(2,3));
+		initialList.add(new ImagePoint(-1,-1)); initialList.add(new ImagePoint(-5,2));
+		
+		// Addition of null point
+		ImagePoint p = new ImagePoint();
+		List<ImagePoint> list = p.subtractTo(initialList);
+		for (int i = 0; i < initialList.size(); i++) {
+			assertEquals(list.get(i), initialList.get(i));
+		}
+		
+		// General cases
+		p = new ImagePoint(2,3);
+		list = p.subtractTo(initialList);
+		for (int i = 0; i < initialList.size(); i++) {
+			assertEquals(list.get(i), initialList.get(i).subtract(p));
+		}
+		
+		p = new ImagePoint(-2,-1);
+		list = p.subtractTo(initialList);
+		for (int i = 0; i < initialList.size(); i++) {
+			assertEquals(list.get(i), initialList.get(i).subtract(p));
+		}
+		
+		p = new ImagePoint(-10,3);
+		list = p.subtractTo(initialList);
+		for (int i = 0; i < initialList.size(); i++) {
+			assertEquals(list.get(i), initialList.get(i).subtract(p));
+		}
+	}
+	
+	/**
 	 * Test method for {@link ImagePoint#add(ImagePoint)}.
 	 */
 	@Test
@@ -72,6 +109,42 @@ public class ImagePointTest {
 		// General case
 		p2.setLocation(5, -3);
 		assertEquals(new ImagePoint(7, 8), p1.add(p2));
+	}
+	
+	/**
+	 * Test method for {@link ImagePoint#addTo(List) 
+	 */
+	@Test
+	public void testAddTo() {
+		List<ImagePoint> initialList = new Vector<>();
+		initialList.add(new ImagePoint()); initialList.add(new ImagePoint(2,3));
+		initialList.add(new ImagePoint(-1,-1)); initialList.add(new ImagePoint(-5,2));
+		
+		// Addition of null point
+		ImagePoint p = new ImagePoint();
+		List<ImagePoint> list = p.addTo(initialList);
+		for (int i = 0; i < initialList.size(); i++) {
+			assertEquals(list.get(i), initialList.get(i));
+		}
+		
+		// General cases
+		p = new ImagePoint(2,3);
+		list = p.addTo(initialList);
+		for (int i = 0; i < initialList.size(); i++) {
+			assertEquals(list.get(i), initialList.get(i).add(p));
+		}
+		
+		p = new ImagePoint(-2,-1);
+		list = p.addTo(initialList);
+		for (int i = 0; i < initialList.size(); i++) {
+			assertEquals(list.get(i), initialList.get(i).add(p));
+		}
+		
+		p = new ImagePoint(-10,3);
+		list = p.addTo(initialList);
+		for (int i = 0; i < initialList.size(); i++) {
+			assertEquals(list.get(i), initialList.get(i).add(p));
+		}
 	}
 	
 	/**

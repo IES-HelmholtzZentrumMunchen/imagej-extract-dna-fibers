@@ -115,6 +115,22 @@ public class ImagePoint extends Point2D {
 		return this;
 	}
 	
+	/** Addition of the current point to the specified list of points.
+	 * The spirit is opposed as the add to point method: here the coordinates
+	 * of the object point is added to the coordinates of the points in the list.
+	 * @param listOfPoints List of points to translate.
+	 * @return The translated list of points.
+	 */
+	public List<ImagePoint> addTo(List<ImagePoint> listOfPoints) {
+		List<ImagePoint> modifiedList = new Vector<>();
+		
+		for (ImagePoint p : listOfPoints) {
+			modifiedList.add(p.add(this));
+		}
+		
+		return modifiedList;
+	}
+	
 	/**
 	 * Subtraction of two points (as in vector space).
 	 * @param p Point to subtract to current point.
@@ -123,6 +139,23 @@ public class ImagePoint extends Point2D {
 		this.x -= p.x;
 		this.y -= p.y;
 		return this;
+	}
+	
+	/**
+	 * Subtraction of the current point to the specified list of points.
+	 * The spirit is opposed as the subtract to point method: here the coordinates
+	 * of the object point is subtracted to the coordinates of the points in the list.
+	 * @param listOfPoints List of points to translate.
+	 * @return The translated list of points.
+	 */
+	public List<ImagePoint> subtractTo(List<ImagePoint> listOfPoints) {
+		List<ImagePoint> modifiedList = new Vector<>();
+		
+		for (ImagePoint p : listOfPoints) {
+			modifiedList.add(p.add(this));
+		}
+		
+		return modifiedList;
 	}
 	
 	/**
