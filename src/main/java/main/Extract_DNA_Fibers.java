@@ -20,8 +20,6 @@
 
 package main;
 
-import java.awt.geom.Point2D;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Vector;
@@ -145,7 +143,6 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		double minLength2 = minLength * minLength;
 		
 		List<Line> segments = new Vector<Line>();
-//		selectedPoints.remove(0); selectedPoints.remove(0);
 		
 		// Setup list of foreground pixels' coordinates in coordinate system with origin centered.
 		ImagePoint origin = ImagePoint.getCenterPointOfImage(binary);
@@ -196,22 +193,11 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 			for (int i = 0; i < associatedPoints.size()-1; i++) {
 				double distance = associatedPoints.get(i).squaredDistanceToPoint(associatedPoints.get(i+1));
 
-				if (distance > maxGap2) {
+				if (distance > maxGap2)
 					indices.add(i);
-//					ImagePoint p = new ImagePoint(associatedPoints.get(i).x, associatedPoints.get(i).y), q = new ImagePoint(associatedPoints.get(i+1).x, associatedPoints.get(i+1).y);
-//					p.add(origin); q.add(origin);
-//					segments.add(new Line(p.x, p.y, q.x, q.y));
-				}
-//				else {
-//					ImagePoint p = associatedPoints.get(i), q = associatedPoints.get(i+1);
-//					p.add(origin); q.add(origin);
-//					segments.add(new Line(p.x, p.y, q.x, q.y));
-//				}
 			}
 			
 			indices.add(associatedPoints.size()-1);
-			
-//			return segments;
 			
 			// Accumulate segments
 			for (int i = 0; i < indices.size()-1; i++) {
