@@ -63,6 +63,15 @@ public class ImagePoint extends Point2D {
 	}
 	
 	/**
+	 * Copy constructor.
+	 * @param p Input point to copy.
+	 */
+	public ImagePoint(ImagePoint p) {
+		this.x = p.x;
+		this.y = p.y;
+	}
+	
+	/**
 	 * @see java.awt.geom.Point2D#getX()
 	 */
 	@Override

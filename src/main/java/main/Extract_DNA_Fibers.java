@@ -130,12 +130,22 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		return segments;
 	}
 	
+	/**
+	 * Build segments from binary image and list of selected points in Hough space.
+	 * @param binary Input binary image of segments to detect.
+	 * @param selectedPoints Output of Hough space creation and accumulation.
+	 * @param maxGap Maximal allowed gap between two successive segments.
+	 * @param minLength Minimal allowed length of a segment.
+	 * @param tolerance Tolerance for pixel aggregation around line.
+	 * @return
+	 */
 	public static List<Line> buildSegments(ImagePlus binary, List<HoughPoint> selectedPoints, double maxGap, double minLength, double tolerance) {
 		// Precompute
 		double    maxGap2 = maxGap * maxGap;
 		double minLength2 = minLength * minLength;
 		
 		List<Line> segments = new Vector<Line>();
+//		selectedPoints.remove(0); selectedPoints.remove(0);
 		
 		// Setup list of foreground pixels' coordinates in coordinate system with origin centered.
 		ImagePoint origin = ImagePoint.getCenterPointOfImage(binary);
@@ -148,13 +158,13 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 			
 			// Keep only associated points with that particular peak and compute range
 			List<ImagePoint> associatedPoints = new Vector<ImagePoint>();
-			int minX = 100000, maxX = -100000;
-			int minY = 100000, maxY = -100000;
+			int minX = binary.getWidth(), maxX = 0;
+			int minY = binary.getHeight(), maxY = 0;
 			
 			for (ImagePoint p : foregroundPoints) {
 				double rho = p.x * cosTheta + p.y * sinTheta;
 				
-				if (Double.compare(peak.rho-tolerance, rho) <= 0 && Double.compare(rho, peak.rho+tolerance) <= 0){
+				if (peak.rho-tolerance <= rho && rho <= peak.rho+tolerance) {
 					associatedPoints.add(p);
 					
 					if (p.x < minX)
@@ -183,22 +193,35 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 			List<Integer> indices = new Vector<Integer>();
 			indices.add(-1);
 			
-			for (int i = 1; i < associatedPoints.size(); i++) {
-				double distance = associatedPoints.get(i-1).squaredDistanceToPoint(associatedPoints.get(i));
+			for (int i = 0; i < associatedPoints.size()-1; i++) {
+				double distance = associatedPoints.get(i).squaredDistanceToPoint(associatedPoints.get(i+1));
 
-				if (distance > maxGap2)
+				if (distance > maxGap2) {
 					indices.add(i);
+//					ImagePoint p = new ImagePoint(associatedPoints.get(i).x, associatedPoints.get(i).y), q = new ImagePoint(associatedPoints.get(i+1).x, associatedPoints.get(i+1).y);
+//					p.add(origin); q.add(origin);
+//					segments.add(new Line(p.x, p.y, q.x, q.y));
+				}
+//				else {
+//					ImagePoint p = associatedPoints.get(i), q = associatedPoints.get(i+1);
+//					p.add(origin); q.add(origin);
+//					segments.add(new Line(p.x, p.y, q.x, q.y));
+//				}
 			}
 			
 			indices.add(associatedPoints.size()-1);
 			
+//			return segments;
+			
 			// Accumulate segments
-			for (int i = 0; i < indices.size(); i++) {
-				ImagePoint p1 = associatedPoints.get(indices.get(i)+1);
-				ImagePoint p2 = associatedPoints.get(indices.get(i+1));
+			for (int i = 0; i < indices.size()-1; i++) {
+				ImagePoint p1 = new ImagePoint(associatedPoints.get(indices.get(i)+1));
+				ImagePoint p2 = new ImagePoint(associatedPoints.get(indices.get(i+1)));
 				
-				if (Double.compare(p1.squaredDistanceToPoint(p2), minLength2) >= 0)
+				if (p1.squaredDistanceToPoint(p2) >= minLength2) {
+					p1.add(origin); p2.add(origin);
 					segments.add(new Line(p1.x, p1.y, p2.x, p2.y));
+				}
 			}
 		}
 		

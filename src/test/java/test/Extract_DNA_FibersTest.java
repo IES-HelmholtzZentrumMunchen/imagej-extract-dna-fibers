@@ -30,7 +30,9 @@ import org.junit.Test;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.gui.Line;
 import ij.gui.NewImage;
+import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 
 import coordinates.*;
@@ -47,7 +49,7 @@ public class Extract_DNA_FibersTest {
 	/** Maximal error allowed when testing differences of structures. */
 	public static final double max_error = 1e-2;
 	
-	public String testpath = "src/test/resources/";
+	public static String testpath = "src/test/resources/";
 	
 	@Before
 	public void setUp() throws Exception {
@@ -81,8 +83,8 @@ public class Extract_DNA_FibersTest {
 	 */
 	@Test @Ignore("Not yet compatible with Travis-CI")
 	public void testExtractSkeletons() {
-		ImagePlus expected = IJ.openImage(this.testpath + "example_skeletons.zip");
-		ImagePlus original = IJ.openImage(this.testpath + "example_original.zip");
+		ImagePlus expected = IJ.openImage(Extract_DNA_FibersTest.testpath + "example_skeletons.zip");
+		ImagePlus original = IJ.openImage(Extract_DNA_FibersTest.testpath + "example_original.zip");
 		
 		ImagePlus actual = Extract_DNA_Fibers.extractSkeletons(original, 1, 2, 2);
 //		IJ.save(actual, testpath + "example_skeletons_actual.zip");
@@ -186,11 +188,11 @@ public class Extract_DNA_FibersTest {
 		// Real dataset
 		//
 		
-		skeletons = IJ.openImage(this.testpath + "example_skeletons.zip");
-		List<HoughPoint> nearlyExpected = CsvManager.readHoughPoints(this.testpath+"hough_points.csv", ",");
+		skeletons = IJ.openImage(Extract_DNA_FibersTest.testpath + "example_skeletons.zip");
+		List<HoughPoint> nearlyExpected = CsvManager.readHoughPoints(Extract_DNA_FibersTest.testpath+"hough_points.csv", ",");
 		
 		List<HoughPoint> points = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 10000);
-//		CsvManager.writeHoughPoints(points, this.testpath+"hough_points.csv", ",");
+//		CsvManager.writeHoughPoints(points, Extract_DNA_FibersTest.testpath+"hough_points.csv", ",");
 		
 		double hausdorffDistance = Extract_DNA_FibersTest.computeHausdorffDistance(nearlyExpected, points);
 		double minHausdorffDistance = 30;
@@ -310,15 +312,96 @@ public class Extract_DNA_FibersTest {
 		// Real dataset
 		//
 		
-		points = CsvManager.readHoughPoints(this.testpath+"hough_points_lowsample.csv", ",");
-		List<HoughPoint> expectedPoints = CsvManager.readHoughPoints(this.testpath+"selected_points.csv", ",");
+		points = CsvManager.readHoughPoints(Extract_DNA_FibersTest.testpath+"hough_points_lowsample.csv", ",");
+		List<HoughPoint> expectedPoints = CsvManager.readHoughPoints(Extract_DNA_FibersTest.testpath+"selected_points.csv", ",");
 		
 		selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0.33, 2.5, 5);
-//		CsvManager.writeHoughPoints(selectedPoints, this.testpath+"selected_points.csv", ",");
+//		CsvManager.writeHoughPoints(selectedPoints, Extract_DNA_FibersTest.testpath+"selected_points.csv", ",");
 		
 		assertEquals(expectedPoints.size(), selectedPoints.size());
 		
 		for (HoughPoint p : selectedPoints)
 			assertTrue(p+" is not contained in expected list", Extract_DNA_FibersTest.containsPoint(p, expectedPoints));
+		
+		ImagePlus skeletons = IJ.openImage(Extract_DNA_FibersTest.testpath + "example_skeletons.zip");
+		ImagePoint   origin = ImagePoint.getCenterPointOfImage(skeletons);
+		RoiManager manager = new RoiManager();
+		for (HoughPoint p : selectedPoints) {
+			manager.addRoi(p.convertHoughPointToImageLine(skeletons, origin));
+		}
+		manager.runCommand("Save", Extract_DNA_FibersTest.testpath+"lines.zip");
+	}
+	
+	/**
+	 * Test if a list contains a specific line ROI.
+	 * @param pexp Expected line ROI.
+	 * @param list List to test.
+	 * @return True if the list contains the expected line ROI, false otherwise.
+	 */
+	public static boolean containsLineRoi(Line lexp, List<Line> list) {
+		boolean contains = false;
+		
+		for (Line l : list) {
+			if (l.x1 == lexp.x1 && l.x2 == lexp.x2 && l.y1 == lexp.y1 && l.y2 == lexp.y2) {
+				contains = true;
+				break;
+			}
+		}
+		
+		return contains;
+	}
+	
+	/**
+	 * Test method for {@link Extract_DNA_Fibers#buildSegments(ImagePlus, List, double, double, double)}
+	 * @throws Exception 
+	 */
+	@Test
+	public void testBuildSegments() throws Exception {
+		ImagePlus             skeletons = IJ.openImage(Extract_DNA_FibersTest.testpath + "example_skeletons.zip");
+		List<HoughPoint> selectedPoints = CsvManager.readHoughPoints(Extract_DNA_FibersTest.testpath+"selected_points.csv", ",");
+		
+		List<Line> segments = Extract_DNA_Fibers.buildSegments(skeletons, selectedPoints, 50, 30, 2.0);
+		
+//		RoiManager manager = new RoiManager();
+//		for (Line segment : segments)
+//			manager.addRoi(segment);
+//		
+//		manager.runCommand("Save", Extract_DNA_FibersTest.testpath+"segments.zip");
+
+		Line lexp = new Line(355, 470, 333, 375);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+		
+		lexp = new Line(323, 316, 306, 247);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+		
+		lexp = new Line(281, 108, 255, 0);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+		
+		lexp = new Line(369, 597, 328, 425);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+		
+		lexp = new Line(316, 372, 247, 70);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+		
+		lexp = new Line(575, 630, 428, 0);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+		
+		lexp = new Line(275, 356, 267, 265);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+		
+		lexp = new Line(262, 137, 257, 69);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+		
+		lexp = new Line(275, 190, 308, 223);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+		
+		lexp = new Line(520, 401, 548, 429);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+		
+		lexp = new Line(587, 618, 578, 566);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+		
+		lexp = new Line(564, 498, 481, 115);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
 	}
 }
