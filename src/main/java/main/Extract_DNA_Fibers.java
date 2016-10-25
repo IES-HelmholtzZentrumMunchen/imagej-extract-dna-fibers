@@ -35,6 +35,7 @@ import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.Line;
 import ij.plugin.filter.PlugInFilter;
+import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
 import kernel.GaussianKernel;
 import kernel.MeanShift;
@@ -67,7 +68,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	/** The second channel to take into account. */
 	protected int secondChannel = 1;
 	
-	/** The number of couple of points to sample in image space. */
+	/** The number of couple of points to sample in image space (single points in Hough space). */
 	protected int numberOfPoints = 1000;
 	
 	/** The sensitivity of candidate points selection. */
@@ -78,6 +79,15 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	
 	/** The thickness sensitivity (in pixels, bandwidth on rho axis in Hough space). */
 	protected double thicknessSensitivity = 5;
+	
+	/** The maximum gap (in pixels) allowed between two segments (merge if smaller). */
+	protected double maxSegmentGap = 30;
+	
+	/** The minimum length (in pixels) of a segment to be considered. */
+	protected double minSegmentLength = 50;
+	
+	/** Maximal distance (in pixels) to the Hough line of a pixel to be considered as a part of a segment. */
+	protected double widthTolerance = 1.0;
 
 	/**
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
@@ -98,8 +108,13 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	@Override
 	public void run(ImageProcessor ip) {
 		if (this.showAndCheckDialog()) {
-			Extract_DNA_Fibers.detectFibers(this.image, this.thickness, this.firstChannel, 
-					this.secondChannel, this.selectionSensitivity, this.angularSensitivity, this.thicknessSensitivity);
+			List<Line> segments = Extract_DNA_Fibers.detectFibers(this.image, this.thickness, this.firstChannel, this.secondChannel, 
+					this.numberOfPoints, this.selectionSensitivity, this.angularSensitivity, this.thicknessSensitivity,
+					this.maxSegmentGap, this.minSegmentLength, this.widthTolerance);
+			
+			RoiManager manager = new RoiManager();
+			for (Line l : segments)
+				manager.addRoi(l);
 		}
 	}
 	
@@ -109,21 +124,29 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	 * @param thickness Thickness in pixels of the fibers.
 	 * @param startSlice Project from this channel.
 	 * @param endSlice Project until this channel.
+	 * @param numberOfPoints Number of points to generate randomely in Hough space.
 	 * @param angularSensitivity Soft threshold for angle (in degrees).
 	 * @param thicknessSensitivity Soft threshold for line thickness (in pixels).
 	 * @param selectionSensitivity Sensitivity to selection of candidates points (in [0,1]).
+	 * @param maxSegmentGap Maximum gap allowed between two segments (merge if smaller).
+	 * @param minSegmentLength Minimum length of a segment to be considered.
+	 * @param widthTolerance Maximal distance to the Hough line of a pixel to be considered as a part of a segment.
 	 * @return A list of segments as Line ROI.
 	 */
-	public static List<Line> detectFibers(ImagePlus input, double thickness, int startSlice, 
-			int endSlice, double angularSensitivity, double thicknessSensitivity, double selectionSensitivity) {
+	public static List<Line> detectFibers(ImagePlus input, double thickness, int startSlice, int endSlice, 
+			int numberOfPoints, double angularSensitivity, double thicknessSensitivity, double selectionSensitivity,
+			double maxSegmentGap, double minSegmentLength, double widthTolerance) {
 		ImagePlus skeletons = Extract_DNA_Fibers.extractSkeletons(input, startSlice, endSlice, thickness);
+		skeletons.hide();
 		skeletons.setTitle("Skeletons image");
 		
-		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 1000);
+		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, numberOfPoints);
 		
 		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(houghPoints, selectionSensitivity, angularSensitivity, thicknessSensitivity);
 		
-		List<Line> segments = Extract_DNA_Fibers.buildSegments(skeletons, selectedPoints, 10, 10, 1.0);
+		List<Line> segments = Extract_DNA_Fibers.buildSegments(skeletons, selectedPoints, maxSegmentGap, minSegmentLength, widthTolerance);
+		
+		skeletons.close();
 		
 		return segments;
 	}
@@ -443,6 +466,9 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		gd.addNumericField("Selection sensitivity", this.selectionSensitivity, 2, number_of_columns, "");
 		gd.addNumericField("Thickness sensitivity", this.thicknessSensitivity, 1, number_of_columns, "pixels");
 		gd.addNumericField("Angular sensitivity", this.angularSensitivity, 1, number_of_columns, "degrees");
+		gd.addNumericField("Maximum segment gap", this.maxSegmentGap, 1, number_of_columns, "pixels");
+		gd.addNumericField("Minimum segment length", this.minSegmentLength, 1, number_of_columns, "pixels");
+		gd.addNumericField("Segment width tolerance", this.widthTolerance, 1, number_of_columns, "pixels");
 
 		gd.showDialog();
 		if (gd.wasCanceled())
@@ -455,6 +481,9 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		this.selectionSensitivity = gd.getNextNumber();
 		this.thicknessSensitivity = gd.getNextNumber();
 		this.angularSensitivity   = gd.getNextNumber();
+		this.maxSegmentGap        = gd.getNextNumber();
+		this.minSegmentLength     = gd.getNextNumber();
+		this.widthTolerance       = gd.getNextNumber();
 
 		return true;
 	}
@@ -484,8 +513,14 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 				IJ.error("Input error", "Thickness sensitivity must be greater than zero!");
 			else if (Double.compare(this.selectionSensitivity, 0.0) <= 0)
 				IJ.error("Input error", "Selection sensitivity must be greater than zero!");
-			else if (Double.compare(this.selectionSensitivity, 0.0) >= 1)
+			else if (Double.compare(this.selectionSensitivity, 1.0) >= 0)
 				IJ.error("Input error", "Selection sensitivity must be lesser than one!");
+			else if (Double.compare(this.maxSegmentGap, 0.0) <= 0)
+				IJ.error("Input error", "Maximal segment gap must be greater than zero!");
+			else if (Double.compare(this.minSegmentLength, 0.0) <= 0)
+				IJ.error("Input error", "Minimum segment length must be greater than zero!");
+			else if (Double.compare(this.widthTolerance, 0.0) <= 0)
+				IJ.error("Input error", "Segment width tolerance must be greater than zero!");
 			else
 				checked = true;
 			
