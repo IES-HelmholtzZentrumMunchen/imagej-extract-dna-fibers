@@ -109,7 +109,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	public void run(ImageProcessor ip) {
 		if (this.showAndCheckDialog()) {
 			List<Line> segments = Extract_DNA_Fibers.detectFibers(this.image, this.thickness, this.firstChannel, this.secondChannel, 
-					this.numberOfPoints, this.selectionSensitivity, this.angularSensitivity, this.thicknessSensitivity,
+					this.numberOfPoints, this.angularSensitivity, this.thicknessSensitivity, this.selectionSensitivity,
 					this.maxSegmentGap, this.minSegmentLength, this.widthTolerance);
 			
 			RoiManager manager = new RoiManager();
@@ -141,7 +141,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		skeletons.setTitle("Skeletons image");
 		
 		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, numberOfPoints);
-		
+
 		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(houghPoints, selectionSensitivity, angularSensitivity, thicknessSensitivity);
 		
 		List<Line> segments = Extract_DNA_Fibers.buildSegments(skeletons, selectedPoints, maxSegmentGap, minSegmentLength, widthTolerance);
