@@ -329,7 +329,7 @@ public class Extract_DNA_FibersTest {
 		for (HoughPoint p : selectedPoints) {
 			manager.addRoi(p.convertHoughPointToImageLine(skeletons, origin));
 		}
-		manager.runCommand("Save", Extract_DNA_FibersTest.testpath+"lines.zip");
+//		manager.runCommand("Save", Extract_DNA_FibersTest.testpath+"lines.zip");
 	}
 	
 	/**
