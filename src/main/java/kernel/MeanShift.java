@@ -37,8 +37,8 @@ import ij.IJ;
  * @author julien.pontabry
  */
 public class MeanShift {
-	/** Kernel used for density estimate. */
-	protected Kernel k;
+	/** Max domain value of the Gaussian kernel (approximation). */
+	public static final double maxDomain = 5.0;
 	
 	/** Bandwidths for each component. */
 	protected HoughPoint h;
@@ -64,17 +64,7 @@ public class MeanShift {
 	 * directions) Gaussian kernel is used as default.
 	 */
 	public MeanShift() {
-		this(new GaussianKernel());
-	}
-	
-	/**
-	 * Constructor.
-	 * The kernel is by default isotropic with bandwidth
-	 * equal to 1 in both directions.
-	 * @param k The kernel to use for density estimate.
-	 */
-	public MeanShift(Kernel k) {
-		this(k, new HoughPoint(1, 1));
+		this(new HoughPoint(1,1));
 	}
 	
 	/**
@@ -82,29 +72,12 @@ public class MeanShift {
 	 * @param k The kernel to use for density estimate.
 	 * @param h The bandwidths for both components as a <code>HoughPoint</code>
 	 */
-	public MeanShift(Kernel k, HoughPoint h) {
-		this.k = k;
+	public MeanShift(HoughPoint h) {
 		this.h = h;
 		
 		this.labels = null;
 		this.modes = null;
 		this.labels = null;
-	}
-	
-	/**
-	 * Set the kernel to use for density estimate.
-	 * @param k Any kernel.
-	 */
-	public void setKernel(Kernel k) {
-		this.k = k;
-	}
-	
-	/**
-	 * Get the kernel used for density estimate.
-	 * @return Currently used kernel.
-	 */
-	public Kernel getKernel() {
-		return this.k;
 	}
 	
 	/**
@@ -144,7 +117,6 @@ public class MeanShift {
 	 */
 	public void runWith(List<HoughPoint> data) {
 		// Initialize output
-//		this.labels = new Vector<Integer>(data.size());
 		Integer[] labels = new Integer[data.size()];
 		this.modes = new Vector<HoughPoint>();
 		
@@ -165,8 +137,7 @@ public class MeanShift {
 						double x = 0.0, y = 0.0;
 
 						for (HoughPoint q : data) {
-//							double weight = this.kernelDerivative(p, q);
-							double weight = this.kernel(p, q);
+							double weight = this.kernelDistance(p, q);
 							
 							if (Double.compare(weight, 0.0) > 0) {
 								sumOfWeights += weight;
@@ -268,37 +239,20 @@ public class MeanShift {
 	 * @param q Second point of the kernel distance.
 	 * @return Kernel distance between the two specified points <code>p</code> and <code>q</code>.
 	 */
-	protected double kernel(HoughPoint p, HoughPoint q) {
-//		double x = (p.getX() - q.getX()) / this.h.getX();
-//		double y = (p.getY() - q.getY()) / this.h.getY();
-//		
-//		return this.k.evaluateSquared(x*x + y*y);
+	protected double kernelDistance(HoughPoint p, HoughPoint q) {
 		// Compute kernel only for close points
 		// Use partial distance to speed up the process
 		double  x = (p.getX() - q.getX()) / this.h.getX();
 		double x2 = x*x;
 		
-		if (Double.compare(x2, this.k.getMaxDomain()) < 0) { // x < 5
+		if (Double.compare(x2, MeanShift.maxDomain) < 0) { // x < 5
 			double y = (p.getY() - q.getY()) / this.h.getY();
-			double u = x2 + y*y;
+			double u2 = x2 + y*y;
 			
-			if (Double.compare(u, this.k.getMaxDomain()) < 0) 
-				return this.k.evaluateSquared(u);
+			if (Double.compare(u2, MeanShift.maxDomain) < 0) 
+				return Math.exp(-0.5 * u2);
 		}
 
 		return 0.0;
-	}
-	
-	/**
-	 * Estimate kernel derivative distance for 2D vectors with bandwidths.
-	 * @param p First point of the kernel distance.
-	 * @param q Second point of the kernel distance.
-	 * @return Kernel distance between the two specified points <code>p</code> and <code>q</code>.
-	 */
-	protected double kernelDerivative(HoughPoint p, HoughPoint q) {
-		double x = (p.getX() - q.getX()) / this.h.getX();
-		double y = (p.getY() - q.getY()) / this.h.getY();
-		
-		return this.k.derivative(Math.sqrt(x*x + y*y));
 	}
 }

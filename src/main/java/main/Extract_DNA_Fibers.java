@@ -287,7 +287,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		List<HoughPoint> replicatedHoughPoints = Extract_DNA_Fibers.replicateHoughSpaceBorders(houghPoints, thetaBandwidth, maxValue, minValue, true);
 		
 		// Find modes
-		MeanShift modesFinder = new MeanShift(new GaussianKernel(), new HoughPoint(thetaBandwidth, rhoBandwidth));
+		MeanShift modesFinder = new MeanShift(new HoughPoint(thetaBandwidth, rhoBandwidth));
 		modesFinder.runWith(replicatedHoughPoints);
 		List<HoughPoint> modes = modesFinder.getModes();
 		List<Integer>   labels = modesFinder.getLabels();

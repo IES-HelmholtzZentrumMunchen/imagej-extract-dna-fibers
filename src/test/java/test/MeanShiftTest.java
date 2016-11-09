@@ -68,7 +68,7 @@ public class MeanShiftTest {
 	@Before
 	public void setUp() throws Exception {
 		// Build a standard mean-shift
-		this.process = new MeanShift(new GaussianKernel(), new HoughPoint(0.6, 0.6));
+		this.process = new MeanShift(new HoughPoint(0.6, 0.6));
 		
 		// Read data files and fill the data point list
 		this.data = CsvManager.readHoughPoints(this.testPath+this.dataFile, this.csvSeparator);
