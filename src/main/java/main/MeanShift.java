@@ -137,14 +137,24 @@ public class MeanShift {
 						double x = 0.0, y = 0.0;
 
 						for (HoughPoint q : data) {
-							double weight = this.kernelDistance(p, q);
+							// Compute Gaussian kernel distance only for close points
+							// Use partial distance to speed up the process
+							double  tmpx = (p.getX() - q.getX()) / this.h.getX();
+							double tmpx2 = tmpx*tmpx;
 							
-							if (Double.compare(weight, 0.0) > 0) {
-								sumOfWeights += weight;
-								x += q.getX() * weight;
-								y += q.getY() * weight;
+							if (Double.compare(tmpx2, MeanShift.maxDomain) < 0) { // x < 5
+								double tmpy = (p.getY() - q.getY()) / this.h.getY();
+								double tmpu2 = tmpx2 + tmpy*tmpy;
+								
+								if (Double.compare(tmpu2, MeanShift.maxDomain) < 0) { 
+									double weight = Math.exp(-0.5 * tmpu2);
+									
+									sumOfWeights += weight;
+									x += q.getX() * weight;
+									y += q.getY() * weight;
+								}
 							}
-						}
+						} // for each point
 
 						HoughPoint mean = new HoughPoint(x/sumOfWeights, y/sumOfWeights);
 						double x_diff = mean.getX()-p.getX(), y_diff = mean.getY()-p.getY();
@@ -231,28 +241,5 @@ public class MeanShift {
 	 */
 	public List<HoughPoint> getModes() {
 		return this.modes;
-	}
-	
-	/**
-	 * Estimate kernel distance for 2D vectors with bandwidths.
-	 * @param p First point of the kernel distance.
-	 * @param q Second point of the kernel distance.
-	 * @return Kernel distance between the two specified points <code>p</code> and <code>q</code>.
-	 */
-	protected double kernelDistance(HoughPoint p, HoughPoint q) {
-		// Compute kernel only for close points
-		// Use partial distance to speed up the process
-		double  x = (p.getX() - q.getX()) / this.h.getX();
-		double x2 = x*x;
-		
-		if (Double.compare(x2, MeanShift.maxDomain) < 0) { // x < 5
-			double y = (p.getY() - q.getY()) / this.h.getY();
-			double u2 = x2 + y*y;
-			
-			if (Double.compare(u2, MeanShift.maxDomain) < 0) 
-				return Math.exp(-0.5 * u2);
-		}
-
-		return 0.0;
 	}
 }
