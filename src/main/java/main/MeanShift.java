@@ -121,12 +121,21 @@ public class MeanShift {
 		this.modes = new Vector<HoughPoint>();
 		
 		// Setup mean-shift for data points to be executed in parallel
-		List<Callable<DataPoint>> tasks = new Vector<>();
-				
-		IntStream.range(0, data.size()).forEach(i -> {
+		List<Callable<Vector<DataPoint>>> tasks = new Vector<>();
+		
+		// Cut the process in C+1 pieces (where C is the number of cores)
+		// to accelerate the process (avoid many thread creations/destructions
+		// and use maximum CPU for computing only.
+		int groupSize = data.size()/(Runtime.getRuntime().availableProcessors()+1);
+		for (int i = 0; i < data.size(); i+=groupSize) {
+			final int startIndex = i;
+
 			tasks.add(() -> {
+				Vector<DataPoint> dataPoints = new Vector<>();
+				
+				for (int j = startIndex; j < startIndex+groupSize && j < data.size(); j++) {
 					// Initialization of the mean shift
-					HoughPoint p = new HoughPoint(data.get(i));
+					HoughPoint p = new HoughPoint(data.get(j));
 
 					double error;
 					int iteration = 0;
@@ -165,9 +174,12 @@ public class MeanShift {
 					} while (Double.compare(error, this.tolerance) > 0 && iteration < max_iterations);
 					
 					// The final mode is the updated point
-					return new DataPoint(p, i);
+					dataPoints.add(new DataPoint(p, j));
+				}
+				
+				return dataPoints;
 			});
-		});
+		}
 		
 		// Run threads in parallel and reduce results
 		ExecutorService executor = Executors.newWorkStealingPool();
@@ -184,7 +196,8 @@ public class MeanShift {
 	        		}
 	        	})
 	        	.forEach(result -> {
-	        		labels[result.position] = this.mergeOrAddMode(result.point);
+	        		for (int i = 0; i < result.size(); i++)
+	        			labels[result.get(i).position] = this.mergeOrAddMode(result.get(i).point);
 	        	});
 	        
 	        this.labels = new Vector<Integer>(Arrays.asList(labels));

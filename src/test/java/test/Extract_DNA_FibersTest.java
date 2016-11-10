@@ -315,7 +315,10 @@ public class Extract_DNA_FibersTest {
 		points = CsvManager.readHoughPoints(Extract_DNA_FibersTest.testpath+"hough_points_lowsample.csv", ",");
 		List<HoughPoint> expectedPoints = CsvManager.readHoughPoints(Extract_DNA_FibersTest.testpath+"selected_points.csv", ",");
 		
+		long startTime = System.nanoTime();
 		selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0.33, 2.5, 5);
+		long endTime = System.nanoTime();
+		System.out.println("Elapsed time: "+(endTime-startTime)/1000000.+ "ms.");
 //		CsvManager.writeHoughPoints(selectedPoints, Extract_DNA_FibersTest.testpath+"selected_points.csv", ",");
 		
 		assertEquals(expectedPoints.size(), selectedPoints.size());
