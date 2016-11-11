@@ -249,6 +249,36 @@ public class ImagePointTest {
 		assertEquals(pexp.theta, p.theta, this.epsilon);
 		assertEquals(pexp.rho, p.rho, this.epsilon);
 	}
+	
+	/**
+	 * Test method for {@link ImagePoint#estimateHoughPoint(ImagePoint, List)}
+	 */
+	@Test
+	public void testEstimateHoughPoint() {
+		List<ImagePoint> points = new Vector<>();
+		points.add(new ImagePoint(18,0)); points.add(new ImagePoint(18,1)); points.add(new ImagePoint(18,2));
+		points.add(new ImagePoint(26,2)); points.add(new ImagePoint(18,3)); points.add(new ImagePoint(26,3));
+		points.add(new ImagePoint(18,4)); points.add(new ImagePoint(19,5)); points.add(new ImagePoint(19,6));
+		points.add(new ImagePoint(2,7)); points.add(new ImagePoint(19,7)); points.add(new ImagePoint(2,8));
+		points.add(new ImagePoint(20,8)); points.add(new ImagePoint(20,9)); points.add(new ImagePoint(20,10));
+		points.add(new ImagePoint(21,11)); points.add(new ImagePoint(21,12)); points.add(new ImagePoint(4,16));
+		points.add(new ImagePoint(5,17)); points.add(new ImagePoint(23,18)); points.add(new ImagePoint(23,19));
+		points.add(new ImagePoint(23,20)); points.add(new ImagePoint(24,21)); points.add(new ImagePoint(24,22));
+		points.add(new ImagePoint(25,23)); points.add(new ImagePoint(25,24)); points.add(new ImagePoint(25,26));
+		points.add(new ImagePoint(25,27)); points.add(new ImagePoint(8,28)); points.add(new ImagePoint(9,28));
+		points.add(new ImagePoint(26,28)); points.add(new ImagePoint(28,34)); points.add(new ImagePoint(28,35));
+		points.add(new ImagePoint(29,43)); points.add(new ImagePoint(13,44)); points.add(new ImagePoint(30,44));
+		points.add(new ImagePoint(13,45)); points.add(new ImagePoint(30,45)); points.add(new ImagePoint(13,46));
+		points.add(new ImagePoint(30,46)); points.add(new ImagePoint(13,47)); points.add(new ImagePoint(30,47));
+		points.add(new ImagePoint(13,48)); points.add(new ImagePoint(30,48)); points.add(new ImagePoint(13,49));
+		points.add(new ImagePoint(30,49));
+		
+		ImagePoint p0 = new ImagePoint(25,25);
+		HoughPoint h = p0.estimatedHoughPoint(points);
+		
+		assertEquals(-0.273008703087, h.theta, 1e-7);
+		assertEquals(17.3333523549, h.rho, 1e-7);
+	}
 
 	/**
 	 * Test method for {@link ImagePoint#getCenterPointOfImage(ImagePlus)}.

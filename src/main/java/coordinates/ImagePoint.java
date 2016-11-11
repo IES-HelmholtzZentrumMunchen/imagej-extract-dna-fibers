@@ -209,6 +209,54 @@ public class ImagePoint extends Point2D {
 	}
 	
 	/**
+	 * Estimate a straight line in Hesse normal form with a list of points.
+	 * The line is estimated using regression. Instead of least squares, the
+	 * Theil-Sen estimator is applied (robust estimator using the median).
+	 * Note that p0 is not supposed to be in the list of points (no checking
+	 * will be done for that).
+	 * @param p0 A point that is known to be on the line to estimate.
+	 * @param points A list of points used to estimate the line.
+	 * @return The estimated Hough point (straight line in Hesse normal form).
+	 */
+	public static HoughPoint estimateHoughPoint(ImagePoint p0, List<ImagePoint> points) {
+		// Initialize list
+		List<java.lang.Double> thetas = new Vector<>();
+		
+		// Accumulate angle estimations
+		for (ImagePoint p : points) {
+			int a = p0.x - p.x;
+			int b = p0.y - p.y;
+
+			if (a == 0)
+				thetas.add(0.);
+			else if (b == 0)
+				thetas.add(-Math.PI/2.);
+			else
+				thetas.add(-Math.atan((double)a/(double)b));
+		}
+		
+		// Find the median
+		thetas.sort(null);
+		double theta = thetas.get(thetas.size()/2);
+		
+		// Deduce rho (remember p0 is on the line)
+		double rho = p0.x*Math.cos(theta) + p0.y*Math.sin(theta);
+		
+		
+		return new HoughPoint(theta, rho);
+	}
+	
+	/**
+	 * Convenience method for straight line estimation (Hesse normal form).
+	 * @param p0 A point that is known to be on the line to estimate.
+	 * @param points A list of points used to estimate the line.
+	 * @return The estimated Hough point (straight line in Hesse normal form).
+	 */
+	public HoughPoint estimatedHoughPoint(List<ImagePoint> points) {
+		return ImagePoint.estimateHoughPoint(this, points);
+	}
+	
+	/**
 	 * Compute the Hough representation of the line going through input image points.
 	 * 
 	 * Two image points are enough to build a line and express this line in the Hough space.
