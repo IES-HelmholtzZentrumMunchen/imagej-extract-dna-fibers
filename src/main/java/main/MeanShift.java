@@ -126,17 +126,22 @@ public class MeanShift {
 		// Cut the process in C+1 pieces (where C is the number of cores)
 		// to accelerate the process (avoid many thread creations/destructions
 		// and use maximum CPU for computing only.
-		int groupSize = data.size()/(Runtime.getRuntime().availableProcessors()+1);
+		int groupSize = 1;
+		int cores = Runtime.getRuntime().availableProcessors()+1;
+		
+		if (cores <= data.size()) // to prevent the case when data size is less than cores and groups is zero
+			groupSize = data.size()/cores;
 		System.out.println("\tdata.size() = "+data.size());
 		System.out.println("\tRuntime.getRuntime().availableProcessors()+1 = "+Runtime.getRuntime().availableProcessors()+1);
 		System.out.println("\tgroupSize = "+groupSize);
 		for (int i = 0; i < data.size(); i+=groupSize) {
 			final int startIndex = i;
+			final int sizeIndex = groupSize;
 
 			tasks.add(() -> {
 				Vector<DataPoint> dataPoints = new Vector<>();
 				
-				for (int j = startIndex; j < startIndex+groupSize && j < data.size(); j++) {
+				for (int j = startIndex; j < startIndex+sizeIndex && j < data.size(); j++) {
 					// Initialization of the mean shift
 					HoughPoint p = new HoughPoint(data.get(j));
 
