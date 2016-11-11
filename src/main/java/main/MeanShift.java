@@ -131,7 +131,7 @@ public class MeanShift {
 		
 		if (cores <= data.size()) // to prevent the case when data size is less than cores and groups is zero
 			groupSize = data.size()/cores;
-		
+
 		for (int i = 0; i < data.size(); i+=groupSize) {
 			final int startIndex = i;
 			final int sizeIndex = groupSize;
