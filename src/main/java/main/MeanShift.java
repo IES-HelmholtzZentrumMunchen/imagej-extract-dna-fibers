@@ -127,6 +127,7 @@ public class MeanShift {
 		// to accelerate the process (avoid many thread creations/destructions
 		// and use maximum CPU for computing only.
 		int groupSize = data.size()/(Runtime.getRuntime().availableProcessors()+1);
+		System.out.println("\tgroupSize = "+groupSize);
 		for (int i = 0; i < data.size(); i+=groupSize) {
 			final int startIndex = i;
 

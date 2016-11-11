@@ -270,6 +270,7 @@ public class Extract_DNA_FibersTest {
 				
 		
 		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0, 15, 5);
+		System.out.println("Finished #1");
 		
 		assertEquals(3, selectedPoints.size());
 
@@ -284,6 +285,7 @@ public class Extract_DNA_FibersTest {
 		
 		
 		selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0, 30, 5);
+		System.out.println("Finished #2");
 		
 		assertEquals(1, selectedPoints.size());
 		
@@ -292,6 +294,7 @@ public class Extract_DNA_FibersTest {
 		
 		
 		selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0, 2.5, 5);
+		System.out.println("Finished #3");
 		
 		assertEquals(4, selectedPoints.size());
 		
@@ -317,6 +320,7 @@ public class Extract_DNA_FibersTest {
 		
 		long startTime = System.nanoTime();
 		selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0.33, 2.5, 5);
+		System.out.println("Finished #4");
 		long endTime = System.nanoTime();
 		System.out.println("Elapsed time: "+(endTime-startTime)/1000000.+ "ms.");
 //		CsvManager.writeHoughPoints(selectedPoints, Extract_DNA_FibersTest.testpath+"selected_points.csv", ",");
