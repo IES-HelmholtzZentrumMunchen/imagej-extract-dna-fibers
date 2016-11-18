@@ -167,9 +167,8 @@ public class Extract_DNA_FibersTest {
 		processor.set(13, 10, 1);
 		processor.set(2, 13, 1);
 		
-		
 		ImagePoint origin = ImagePoint.getCenterPointOfImage(skeletons);
-		List<HoughPoint> list = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 100);
+		List<HoughPoint> list = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 100, 25);
 		
 		if (list.isEmpty())
 			fail("Expected non-empty list, got nothing");
@@ -182,8 +181,7 @@ public class Extract_DNA_FibersTest {
 		
 		pexp = ImagePoint.convertImagePointsToHoughPoint(new ImagePoint(13, 10).subtract(origin), new ImagePoint(2, 13).subtract(origin));
 		assertTrue(Extract_DNA_FibersTest.containsPoint(pexp, list));
-		
-		
+
 		//
 		// Real dataset
 		//
@@ -191,7 +189,10 @@ public class Extract_DNA_FibersTest {
 		skeletons = IJ.openImage(Extract_DNA_FibersTest.testpath + "example_skeletons.zip");
 		List<HoughPoint> nearlyExpected = CsvManager.readHoughPoints(Extract_DNA_FibersTest.testpath+"hough_points.csv", ",");
 		
-		List<HoughPoint> points = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 10000);
+		long time_start = System.nanoTime();
+		List<HoughPoint> points = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, 3000, 25);
+		long time_end = System.nanoTime();
+		System.out.println("Elasped time for real Hough space building: "+ (time_end-time_start)/1000000. +" ms.");
 //		CsvManager.writeHoughPoints(points, Extract_DNA_FibersTest.testpath+"hough_points.csv", ",");
 		
 		double hausdorffDistance = Extract_DNA_FibersTest.computeHausdorffDistance(nearlyExpected, points);
@@ -319,7 +320,7 @@ public class Extract_DNA_FibersTest {
 		selectedPoints = Extract_DNA_Fibers.selectHoughPoints(points, 0.33, 2.5, 5);
 
 		long endTime = System.nanoTime();
-		System.out.println("Elapsed time: "+(endTime-startTime)/1000000.+ "ms.");
+		System.out.println("Elapsed time for real Hough points selection: "+(endTime-startTime)/1000000.+ "ms.");
 //		CsvManager.writeHoughPoints(selectedPoints, Extract_DNA_FibersTest.testpath+"selected_points.csv", ",");
 		
 		assertEquals(expectedPoints.size(), selectedPoints.size());

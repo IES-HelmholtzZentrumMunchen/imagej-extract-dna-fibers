@@ -138,7 +138,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		skeletons.hide();
 		skeletons.setTitle("Skeletons image");
 		
-		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, numberOfPoints);
+		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, numberOfPoints, 25); // FIXME put GUI elements
 
 		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(houghPoints, selectionSensitivity, angularSensitivity, thicknessSensitivity);
 		
@@ -386,7 +386,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		
 		return tmp;
 	}
-	
+
 	/**
 	 * Set a list of points in Hough space from skeleton image.
 	 * 
@@ -399,7 +399,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	 * @param numberOfPoints Number of points to sample.
 	 * @return A list of Hough points
 	 */
-	public static List<HoughPoint> buildHoughSpaceFromSkeletons(ImagePlus skeletons, int numberOfPoints) {
+	public static List<HoughPoint> buildHoughSpaceFromSkeletons(ImagePlus skeletons, int numberOfPoints, int windowSize) {
 		// Setup list of foreground pixels' coordinates in coordinate system with origin centered.
 		ImagePoint origin = ImagePoint.getCenterPointOfImage(skeletons);
 		List<ImagePoint> foregroundPoints = ImagePoint.getImageForegroundPoints(skeletons, origin);
@@ -412,12 +412,19 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		
 		IntStream.range(0, numberOfPoints).forEach(i -> {
 			tasks.add(() -> {
-				ImagePoint p1 = foregroundPoints.get(generator.nextInt(foregroundPoints.size()));
-				ImagePoint p2 = foregroundPoints.get(generator.nextInt(foregroundPoints.size()));
+				ImagePoint p0 = foregroundPoints.get(generator.nextInt(foregroundPoints.size()));
 				
-				if (!p1.equals(p2))
-					return ImagePoint.convertImagePointsToHoughPoint(p1, p2);
-				else // p1.equals(p2)
+				// Select p0's neighborhood
+				List<ImagePoint> neighborhood = new Vector<>();
+				
+				for (ImagePoint p : foregroundPoints) {
+					if (!p.equals(p0) && p.distanceToPoint(p0) < windowSize)
+						neighborhood.add(p);
+				}
+				
+				if (!neighborhood.isEmpty())
+					return p0.estimatedHoughPoint(neighborhood);
+				else
 					return null;
 			});
 		});
