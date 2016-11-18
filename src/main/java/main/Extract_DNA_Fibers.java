@@ -473,8 +473,8 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		gd.addNumericField("End at channel", this.secondChannel, 0, number_of_columns, "");
 		gd.addNumericField("Number of samples", this.numberOfPoints, 0, number_of_columns, "");
 		gd.addNumericField("Selection sensitivity", this.selectionSensitivity, 2, number_of_columns, "");
-		gd.addNumericField("Thickness sensitivity", this.thicknessSensitivity, 1, number_of_columns, "pixels");
-		gd.addNumericField("Angular sensitivity", this.angularSensitivity, 1, number_of_columns, "degrees");
+		gd.addNumericField("Shift tolerance", this.thicknessSensitivity, 1, number_of_columns, "pixels");
+		gd.addNumericField("Angular tolerance", this.angularSensitivity, 1, number_of_columns, "degrees");
 		gd.addNumericField("Local window half-size", this.localWindowHalfSize, 0, number_of_columns, "pixels");
 		gd.addNumericField("Maximum segment gap", this.maxSegmentGap, 1, number_of_columns, "pixels");
 		gd.addNumericField("Minimum segment length", this.minSegmentLength, 1, number_of_columns, "pixels");
