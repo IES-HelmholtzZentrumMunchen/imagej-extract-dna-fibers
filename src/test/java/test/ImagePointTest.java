@@ -255,6 +255,13 @@ public class ImagePointTest {
 	 */
 	@Test
 	public void testEstimateHoughPoint() {
+		// Angles are circular quantities, meaning that in our setup, -pi/2 equals pi/2.
+		// The Theil-Sen estimator is median-based, which is tricky with circular quantities
+		// (because their is not really a notion of order, e.g. the transitivity is violated).
+		// Therefore, we need to check the limits conditions (actual angle near borders
+		// and high percentage of outliers).
+		
+		// General case
 		List<ImagePoint> points = new Vector<>();
 		points.add(new ImagePoint(18,0)); points.add(new ImagePoint(18,1)); points.add(new ImagePoint(18,2));
 		points.add(new ImagePoint(26,2)); points.add(new ImagePoint(18,3)); points.add(new ImagePoint(26,3));
@@ -276,8 +283,45 @@ public class ImagePointTest {
 		ImagePoint p0 = new ImagePoint(25,25);
 		HoughPoint h = p0.estimatedHoughPoint(points);
 		
-		assertEquals(-0.273008703087, h.theta, 1e-7);
-		assertEquals(17.3333523549, h.rho, 1e-7);
+		assertEquals(-0.27829965900511133, h.theta, 1e-4);
+		assertEquals(17.1700704936, h.rho, 0.5);
+		
+		// Previous case rotated such that angle is near range limits
+		points = new Vector<>();
+		points.add(new ImagePoint(0, 29)); points.add(new ImagePoint(1, 29)); points.add(new ImagePoint(2, 28)); 
+		points.add(new ImagePoint(7, 35)); points.add(new ImagePoint(4, 27)); points.add(new ImagePoint(8, 34));
+		points.add(new ImagePoint(6, 27)); points.add(new ImagePoint(7, 27)); points.add(new ImagePoint(8, 27));
+		points.add(new ImagePoint(1, 11)); points.add(new ImagePoint(10, 26)); points.add(new ImagePoint(3, 10));
+		points.add(new ImagePoint(12, 26)); points.add(new ImagePoint(13, 25)); points.add(new ImagePoint(14, 25));
+		points.add(new ImagePoint(15, 25)); points.add(new ImagePoint(16, 25)); points.add(new ImagePoint(10, 9));
+		points.add(new ImagePoint(11, 10)); points.add(new ImagePoint(20, 25)); points.add(new ImagePoint(21, 25));
+		points.add(new ImagePoint(21, 25)); points.add(new ImagePoint(23, 25)); points.add(new ImagePoint(24, 25));
+		points.add(new ImagePoint(26, 25)); points.add(new ImagePoint(27, 24)); points.add(new ImagePoint(28, 24));
+		points.add(new ImagePoint(29, 23)); points.add(new ImagePoint(22, 8)); points.add(new ImagePoint(23, 8));
+		points.add(new ImagePoint(32, 23)); points.add(new ImagePoint(34, 24)); points.add(new ImagePoint(34, 24));
+		points.add(new ImagePoint(36, 24)); points.add(new ImagePoint(30, 9)); points.add(new ImagePoint(38, 24));
+		points.add(new ImagePoint(31, 9)); points.add(new ImagePoint(40, 23)); points.add(new ImagePoint(33, 8));
+		points.add(new ImagePoint(42, 23)); points.add(new ImagePoint(35, 7)); points.add(new ImagePoint(43, 22));
+		points.add(new ImagePoint(37, 6)); points.add(new ImagePoint(45, 21)); points.add(new ImagePoint(39, 5));
+		points.add(new ImagePoint(47, 20));
+		
+		p0 = new ImagePoint(25, 25);
+		h = p0.estimatedHoughPoint(points);
+
+		assertEquals(1.460139105621001, h.theta, 1e-4);
+		assertEquals(27.6078815187, h.rho, 0.5);
+		
+		// Angle is near range limits and there are a few points with more than 30% outliers
+		points = new Vector<>();
+		points.add(new ImagePoint(-1,1)); points.add(new ImagePoint(-2,-1));
+		points.add(new ImagePoint(-3,0)); points.add(new ImagePoint(-4,-1)); points.add(new ImagePoint(1,-4));
+		points.add(new ImagePoint(4,-2)); points.add(new ImagePoint(6,-1));
+		
+		p0 = new ImagePoint(0,0);
+		h = p0.estimatedHoughPoint(points);
+
+		assertEquals(1.4056476493802699, h.theta, 1e-4);
+		assertEquals(0., h.rho, 0.5);
 	}
 
 	/**

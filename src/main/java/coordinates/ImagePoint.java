@@ -219,25 +219,54 @@ public class ImagePoint extends Point2D {
 	 * @return The estimated Hough point (straight line in Hesse normal form).
 	 */
 	public static HoughPoint estimateHoughPoint(ImagePoint p0, List<ImagePoint> points) {
-		// Initialize list
-		List<java.lang.Double> thetas = new Vector<>();
+		// Since angles are circular quantities, it does not have
+		// a proper ordering relationship and we need to center the
+		// angles first to their center of mass.
 		
-		// Accumulate angle estimations
+		// Initialize
+		List<java.lang.Double> thetas = new Vector<>();
+		double alpha_sum_sin = 0., alpha_sum_cos = 0.;
+		
 		for (ImagePoint p : points) {
+			// Estimate pairwise angle
+			double theta;
+			
 			int a = p0.x - p.x;
 			int b = p0.y - p.y;
 
 			if (a == 0)
-				thetas.add(0.);
+				theta = 0.;
 			else if (b == 0)
-				thetas.add(-Math.PI/2.);
+				theta = -Math.PI/2.;
 			else
-				thetas.add(-Math.atan((double)a/(double)b));
+				theta = -Math.atan((double)a/(double)b);
+			
+			thetas.add(theta);
+			thetas.add(theta + Math.PI);
+			
+			// Center on the center of mass
+			double alpha = 2.*theta + Math.PI;
+			alpha_sum_sin += Math.sin(alpha);
+			alpha_sum_cos += Math.cos(alpha);
 		}
 		
-		// Find the median
-		thetas.sort(null);
-		double theta = thetas.get(thetas.size()/2);
+		// Compute center of mass
+		double alpha_mass = Math.atan2(-alpha_sum_sin, -alpha_sum_cos) + Math.PI; 		//System.out.println(alpha_mass);
+		double theta_mass = (alpha_mass - Math.PI)/2.; 									//System.out.println(theta_mass);
+		
+		// Center pairwise angles on the center of mass and limit to range [-pi/2, pi/2[
+		List<java.lang.Double> centered_thetas = new Vector<>();
+		
+		for (int i = 0; i < thetas.size(); i++) {
+			double centered_theta = thetas.get(i)-theta_mass;
+			
+			if (java.lang.Double.compare(centered_theta, -Math.PI/2.) >= 0 && java.lang.Double.compare(centered_theta, Math.PI/2.) <= 0)
+				centered_thetas.add(centered_theta);
+		}
+		
+		// Estimate the fitting angle with Theil-Sen and map it back to original range
+		centered_thetas.sort(null);														//System.out.println(centered_thetas);
+		double theta = centered_thetas.get(centered_thetas.size()/2) + theta_mass;
 		
 		// Deduce rho (remember p0 is on the line)
 		double rho = p0.x*Math.cos(theta) + p0.y*Math.sin(theta);
