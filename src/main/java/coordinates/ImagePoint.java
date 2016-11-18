@@ -43,6 +43,9 @@ public class ImagePoint extends Point2D {
 	/** The Y coordinate of image. */
 	public int y;
 	
+	/** Pre-computed constant (useful in particular for local model estimation). */
+	protected static final double PIover2 = Math.PI/2.;
+	
 	/**
 	 * Default constructor.
 	 * 
@@ -229,6 +232,8 @@ public class ImagePoint extends Point2D {
 		
 		for (ImagePoint p : points) {
 			// Estimate pairwise angle
+			// We do not use the meth ImagePoint#convertImagePointsToHoughPoint
+			// because we need to enforce the passing through p0 constraint.
 			double theta;
 			
 			int a = p0.x - p.x;
@@ -237,7 +242,7 @@ public class ImagePoint extends Point2D {
 			if (a == 0)
 				theta = 0.;
 			else if (b == 0)
-				theta = -Math.PI/2.;
+				theta = -ImagePoint.PIover2;
 			else
 				theta = -Math.atan((double)a/(double)b);
 			
@@ -251,22 +256,24 @@ public class ImagePoint extends Point2D {
 		}
 		
 		// Compute center of mass
-		double alpha_mass = Math.atan2(-alpha_sum_sin, -alpha_sum_cos) + Math.PI; 		//System.out.println(alpha_mass);
-		double theta_mass = (alpha_mass - Math.PI)/2.; 									//System.out.println(theta_mass);
+		double alpha_mass = Math.atan2(-alpha_sum_sin, -alpha_sum_cos);
+		double theta_mass = alpha_mass/2.;
 		
 		// Center pairwise angles on the center of mass and limit to range [-pi/2, pi/2[
+		double inf_bound = -ImagePoint.PIover2+theta_mass, sup_bound = ImagePoint.PIover2+theta_mass;
+		
 		List<java.lang.Double> centered_thetas = new Vector<>();
 		
 		for (int i = 0; i < thetas.size(); i++) {
-			double centered_theta = thetas.get(i)-theta_mass;
+			double centered_theta = thetas.get(i);
 			
-			if (java.lang.Double.compare(centered_theta, -Math.PI/2.) >= 0 && java.lang.Double.compare(centered_theta, Math.PI/2.) <= 0)
+			if (java.lang.Double.compare(centered_theta, inf_bound) >= 0 && java.lang.Double.compare(centered_theta, sup_bound) <= 0)
 				centered_thetas.add(centered_theta);
 		}
 		
 		// Estimate the fitting angle with Theil-Sen and map it back to original range
-		centered_thetas.sort(null);														//System.out.println(centered_thetas);
-		double theta = centered_thetas.get(centered_thetas.size()/2) + theta_mass;
+		centered_thetas.sort(null);
+		double theta = centered_thetas.get(centered_thetas.size()/2);
 		
 		// Deduce rho (remember p0 is on the line)
 		double rho = p0.x*Math.cos(theta) + p0.y*Math.sin(theta);
@@ -303,7 +310,7 @@ public class ImagePoint extends Point2D {
 		if (a == 0)
 			p.setLocation(0.0, p1.x);
 		else if (b == 0)
-			p.setLocation(-Math.PI/2.0, p1.y);
+			p.setLocation(-ImagePoint.PIover2, p1.y);
 		else { // a != 0 && b != 0
 			double theta = -Math.atan((double)a/(double)b);
 			double cosTheta = Math.cos(theta);
