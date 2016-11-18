@@ -87,6 +87,9 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	/** Maximal distance (in pixels) to the Hough line of a pixel to be considered as a part of a segment. */
 	protected double widthTolerance = 1.0;
 
+	/** Half-size of the window used when estimating local models. */
+	protected int localWindowHalfSize = 25;
+
 	/**
 	 * @see ij.plugin.filter.PlugInFilter#setup(java.lang.String, ij.ImagePlus)
 	 */
@@ -108,7 +111,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		if (this.showAndCheckDialog()) {
 			List<Line> segments = Extract_DNA_Fibers.detectFibers(this.image, this.thickness, this.firstChannel, this.secondChannel, 
 					this.numberOfPoints, this.angularSensitivity, this.thicknessSensitivity, this.selectionSensitivity,
-					this.maxSegmentGap, this.minSegmentLength, this.widthTolerance);
+					this.maxSegmentGap, this.minSegmentLength, this.widthTolerance, this.localWindowHalfSize );
 			
 			RoiManager manager = new RoiManager();
 			for (Line l : segments)
@@ -129,16 +132,17 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	 * @param maxSegmentGap Maximum gap allowed between two segments (merge if smaller).
 	 * @param minSegmentLength Minimum length of a segment to be considered.
 	 * @param widthTolerance Maximal distance to the Hough line of a pixel to be considered as a part of a segment.
+	 * @param localWindowHalfSize Half size of the window used when estimating the local model.
 	 * @return A list of segments as Line ROI.
 	 */
 	public static List<Line> detectFibers(ImagePlus input, double thickness, int startSlice, int endSlice, 
 			int numberOfPoints, double angularSensitivity, double thicknessSensitivity, double selectionSensitivity,
-			double maxSegmentGap, double minSegmentLength, double widthTolerance) {
+			double maxSegmentGap, double minSegmentLength, double widthTolerance, int localWindowHalfSize) {
 		ImagePlus skeletons = Extract_DNA_Fibers.extractSkeletons(input, startSlice, endSlice, thickness);
 		skeletons.hide();
 		skeletons.setTitle("Skeletons image");
 		
-		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, numberOfPoints, 25); // FIXME put GUI elements
+		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, numberOfPoints, localWindowHalfSize);
 
 		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(houghPoints, selectionSensitivity, angularSensitivity, thicknessSensitivity);
 		
@@ -471,6 +475,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		gd.addNumericField("Selection sensitivity", this.selectionSensitivity, 2, number_of_columns, "");
 		gd.addNumericField("Thickness sensitivity", this.thicknessSensitivity, 1, number_of_columns, "pixels");
 		gd.addNumericField("Angular sensitivity", this.angularSensitivity, 1, number_of_columns, "degrees");
+		gd.addNumericField("Local window half-size", this.localWindowHalfSize, 0, number_of_columns, "pixels");
 		gd.addNumericField("Maximum segment gap", this.maxSegmentGap, 1, number_of_columns, "pixels");
 		gd.addNumericField("Minimum segment length", this.minSegmentLength, 1, number_of_columns, "pixels");
 		gd.addNumericField("Segment width tolerance", this.widthTolerance, 1, number_of_columns, "pixels");
@@ -486,6 +491,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		this.selectionSensitivity = gd.getNextNumber();
 		this.thicknessSensitivity = gd.getNextNumber();
 		this.angularSensitivity   = gd.getNextNumber();
+		this.localWindowHalfSize  = (int)gd.getNextNumber();
 		this.maxSegmentGap        = gd.getNextNumber();
 		this.minSegmentLength     = gd.getNextNumber();
 		this.widthTolerance       = gd.getNextNumber();
@@ -526,6 +532,8 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 				IJ.error("Input error", "Minimum segment length must be greater than zero!");
 			else if (Double.compare(this.widthTolerance, 0.0) <= 0)
 				IJ.error("Input error", "Segment width tolerance must be greater than zero!");
+			else if (this.localWindowHalfSize < 2)
+				IJ.error("Input error", "The loca window half-size must be at least 2 pixels!");
 			else
 				checked = true;
 			
