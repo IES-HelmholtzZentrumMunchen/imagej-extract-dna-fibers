@@ -259,7 +259,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 
 		// Run threads in parallel and reduce results
 		List<Line>   allSegments = new Vector<Line>();
-		ExecutorService executor = Executors.newWorkStealingPool(1);
+		ExecutorService executor = Executors.newWorkStealingPool();
 
 		try {
 			executor.invokeAll(tasks)
