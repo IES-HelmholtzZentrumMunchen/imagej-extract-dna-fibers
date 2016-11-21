@@ -139,6 +139,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	public static List<Line> detectFibers(ImagePlus input, double thickness, int startSlice, int endSlice, 
 			int numberOfPoints, double angularSensitivity, double thicknessSensitivity, double selectionSensitivity,
 			double maxSegmentGap, double minSegmentLength, double widthTolerance, int localWindowHalfSize) {
+		IJ.showProgress(0, 4);
 		ImagePlus skeletons = Extract_DNA_Fibers.extractSkeletons(input, startSlice, endSlice, thickness);
 		skeletons.hide();
 		skeletons.setTitle("Skeletons image");
@@ -146,13 +147,17 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		if (input.getRoi() == null)
 			input.setRoi(0, 0, input.getWidth(), input.getHeight());
 
+		IJ.showProgress(1, 4);
 		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, input.getRoi(), numberOfPoints, localWindowHalfSize);
 
+		IJ.showProgress(2, 4);
 		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(houghPoints, selectionSensitivity, angularSensitivity, thicknessSensitivity);
 		
+		IJ.showProgress(3, 4);
 		List<Line> segments = Extract_DNA_Fibers.buildSegments(skeletons, input.getRoi(), selectedPoints, maxSegmentGap, minSegmentLength, widthTolerance);
 		
 		skeletons.close();
+		IJ.showProgress(4, 4);
 		
 		return segments;
 	}
@@ -473,17 +478,25 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	 * @return True if the dialog box has been filled and accepted, false otherwise.
 	 */
 	private boolean showDialog() {
-		GenericDialog gd = new GenericDialog("DNA Fibers - extract and unfold");
+		GenericDialog gd = new GenericDialog("DNA Fibers - detection");
 
 		int number_of_columns = 4;
-		gd.addNumericField("Thickness", this.thickness, 1, number_of_columns, "pixels");
+		
+		gd.addPanel(new gui.SeparatorPanel("Channels to use"));
 		gd.addNumericField("Start at channel", this.firstChannel, 0, number_of_columns, "");
 		gd.addNumericField("End at channel", this.secondChannel, 0, number_of_columns, "");
+		
+		gd.addPanel(new gui.SeparatorPanel("Local model"));
+		gd.addNumericField("Thickness", this.thickness, 1, number_of_columns, "pixels");
+		gd.addNumericField("Local window half-size", this.localWindowHalfSize, 0, number_of_columns, "pixels");
+		
+		gd.addPanel(new gui.SeparatorPanel("Selection of candidates"));
 		gd.addNumericField("Number of samples", this.numberOfPoints, 0, number_of_columns, "");
-		gd.addNumericField("Selection sensitivity", this.selectionSensitivity, 2, number_of_columns, "");
 		gd.addNumericField("Shift tolerance", this.thicknessSensitivity, 1, number_of_columns, "pixels");
 		gd.addNumericField("Angular tolerance", this.angularSensitivity, 1, number_of_columns, "degrees");
-		gd.addNumericField("Local window half-size", this.localWindowHalfSize, 0, number_of_columns, "pixels");
+		gd.addNumericField("Selection sensitivity", this.selectionSensitivity, 2, number_of_columns, "");
+		
+		gd.addPanel(new gui.SeparatorPanel("Segments building"));
 		gd.addNumericField("Maximum segment gap", this.maxSegmentGap, 1, number_of_columns, "pixels");
 		gd.addNumericField("Minimum segment length", this.minSegmentLength, 1, number_of_columns, "pixels");
 		gd.addNumericField("Segment width tolerance", this.widthTolerance, 1, number_of_columns, "pixels");
@@ -492,14 +505,14 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		if (gd.wasCanceled())
 			return false;
 
-		this.thickness            = gd.getNextNumber();
 		this.firstChannel         = (int)gd.getNextNumber();
 		this.secondChannel        = (int)gd.getNextNumber();
+		this.thickness            = gd.getNextNumber();
+		this.localWindowHalfSize  = (int)gd.getNextNumber();
 		this.numberOfPoints       = (int)gd.getNextNumber();
-		this.selectionSensitivity = gd.getNextNumber();
 		this.thicknessSensitivity = gd.getNextNumber();
 		this.angularSensitivity   = gd.getNextNumber();
-		this.localWindowHalfSize  = (int)gd.getNextNumber();
+		this.selectionSensitivity = gd.getNextNumber();
 		this.maxSegmentGap        = gd.getNextNumber();
 		this.minSegmentLength     = gd.getNextNumber();
 		this.widthTolerance       = gd.getNextNumber();
