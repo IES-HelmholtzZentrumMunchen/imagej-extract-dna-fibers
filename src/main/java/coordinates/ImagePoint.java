@@ -96,8 +96,8 @@ public class ImagePoint extends Point2D {
 	 */
 	@Override
 	public void setLocation(double x, double y) {
-		this.x = (int)x;
-		this.y = (int)y;
+		this.x = (int)Math.round(x);
+		this.y = (int)Math.round(y);
 	}
 
 	/**

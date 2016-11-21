@@ -531,4 +531,27 @@ public class ImagePointTest {
 			assertTrue(roi.contains(p.x+origin.x, p.y+origin.y));
 		}
 	}
+	
+	/**
+	 * Test method for {@link ImagePoint#setLocation(double, double)}
+	 */
+	@Test
+	public void testSetLocation() {
+		ImagePoint p = new ImagePoint();
+		p.setLocation(3.9, 2.1);
+		
+		assertEquals(4, p.x);
+		assertEquals(2, p.y);
+	}
+	
+	/**
+	 * Test method for {@link ImagePoint#toString()}
+	 */
+	@Test
+	public void testToString() {
+		ImagePoint p = new ImagePoint();
+		assertEquals("ImagePoint[0,0]", p.toString());
+		p.setLocation(3, 4);
+		assertEquals("ImagePoint[3,4]", p.toString());
+	}
 }
