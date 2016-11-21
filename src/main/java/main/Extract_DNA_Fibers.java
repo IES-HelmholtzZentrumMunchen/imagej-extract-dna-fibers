@@ -240,7 +240,8 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 
 				// Accumulate segments
 				List<Line> segments = new Vector<Line>();
-				if (indices.size() > 2) {
+
+				if (associatedPoints.size() > 0) {
 					for (int i = 0; i < indices.size()-1; i++) {
 						ImagePoint p1 = new ImagePoint(associatedPoints.get(indices.get(i)+1));
 						ImagePoint p2 = new ImagePoint(associatedPoints.get(indices.get(i+1)));
