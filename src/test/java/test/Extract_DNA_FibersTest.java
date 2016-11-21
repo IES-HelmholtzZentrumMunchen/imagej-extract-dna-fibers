@@ -416,9 +416,12 @@ public class Extract_DNA_FibersTest {
 		lexp = new Line(316, 372, 247, 70);
 		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
 		
-		lexp = new Line(275, 356, 267, 265);
+		lexp = new Line(575, 630, 428, 0);
 		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
 		
+		lexp = new Line(275, 356, 267, 265);
+		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+
 		lexp = new Line(262, 137, 257, 69);
 		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
 		
@@ -427,7 +430,7 @@ public class Extract_DNA_FibersTest {
 		
 		lexp = new Line(520, 401, 548, 429);
 		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
-		
+	
 		lexp = new Line(587, 618, 578, 566);
 		assertTrue("Expected to find <"+lexp+"> in list", Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
 		
@@ -459,6 +462,9 @@ public class Extract_DNA_FibersTest {
 		
 		lexp = new Line(316, 372, 247, 70);
 		assertTrue("Not expected to find <"+lexp+"> in list", !Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
+		
+		lexp = new Line(575, 630, 428, 0);
+		assertTrue("Expected to find <"+lexp+"> in list", !Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
 		
 		lexp = new Line(275, 356, 267, 265);
 		assertTrue("Not expected to find <"+lexp+"> in list", !Extract_DNA_FibersTest.containsLineRoi(lexp, segments));
