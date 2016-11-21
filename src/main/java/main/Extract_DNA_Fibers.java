@@ -34,6 +34,7 @@ import ij.ImagePlus;
 import ij.WindowManager;
 import ij.gui.GenericDialog;
 import ij.gui.Line;
+import ij.gui.Roi;
 import ij.plugin.filter.PlugInFilter;
 import ij.plugin.frame.RoiManager;
 import ij.process.ImageProcessor;
@@ -142,11 +143,14 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		skeletons.hide();
 		skeletons.setTitle("Skeletons image");
 		
-		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, numberOfPoints, localWindowHalfSize);
+		if (input.getRoi() == null)
+			input.setRoi(0, 0, input.getWidth(), input.getHeight());
+
+		List<HoughPoint> houghPoints = Extract_DNA_Fibers.buildHoughSpaceFromSkeletons(skeletons, input.getRoi(), numberOfPoints, localWindowHalfSize);
 
 		List<HoughPoint> selectedPoints = Extract_DNA_Fibers.selectHoughPoints(houghPoints, selectionSensitivity, angularSensitivity, thicknessSensitivity);
 		
-		List<Line> segments = Extract_DNA_Fibers.buildSegments(skeletons, selectedPoints, maxSegmentGap, minSegmentLength, widthTolerance);
+		List<Line> segments = Extract_DNA_Fibers.buildSegments(skeletons, input.getRoi(), selectedPoints, maxSegmentGap, minSegmentLength, widthTolerance);
 		
 		skeletons.close();
 		
@@ -156,20 +160,21 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	/**
 	 * Build segments from binary image and list of selected points in Hough space.
 	 * @param binary Input binary image of segments to detect.
+	 * @param roi Input roi.
 	 * @param selectedPoints Output of Hough space creation and accumulation.
 	 * @param maxGap Maximal allowed gap between two successive segments.
 	 * @param minLength Minimal allowed length of a segment.
 	 * @param tolerance Tolerance for pixel aggregation around line.
 	 * @return
 	 */
-	public static List<Line> buildSegments(ImagePlus binary, List<HoughPoint> selectedPoints, double maxGap, double minLength, double tolerance) {
+	public static List<Line> buildSegments(ImagePlus binary, Roi roi, List<HoughPoint> selectedPoints, double maxGap, double minLength, double tolerance) {
 		// Precompute
 		double    maxGap2 = maxGap * maxGap;
 		double minLength2 = minLength * minLength;
 		
 		// Setup list of foreground pixels' coordinates in coordinate system with origin centered.
 		ImagePoint origin = ImagePoint.getCenterPointOfImage(binary);
-		List<ImagePoint> foregroundPoints = ImagePoint.getImageForegroundPoints(binary, origin);
+		List<ImagePoint> foregroundPoints = ImagePoint.getImageForegroundPoints(binary, roi, origin);
 		
 		// Setup generation functions to be executed in parallel
 		List<Callable<List<Line>>> tasks = new Vector<>();
@@ -177,7 +182,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 		IntStream.range(0, selectedPoints.size()).forEach(k -> {
 			tasks.add(() -> {
 				HoughPoint peak = selectedPoints.get(k);
-						
+
 				// Precompute
 				double cosTheta = Math.cos(peak.theta);
 				double sinTheta = Math.sin(peak.theta);
@@ -230,13 +235,15 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 
 				// Accumulate segments
 				List<Line> segments = new Vector<Line>();
-				for (int i = 0; i < indices.size()-1; i++) {
-					ImagePoint p1 = new ImagePoint(associatedPoints.get(indices.get(i)+1));
-					ImagePoint p2 = new ImagePoint(associatedPoints.get(indices.get(i+1)));
-
-					if (p1.squaredDistanceToPoint(p2) >= minLength2) {
-						p1.add(origin); p2.add(origin);
-						segments.add(new Line(p1.x, p1.y, p2.x, p2.y));
+				if (indices.size() > 2) {
+					for (int i = 0; i < indices.size()-1; i++) {
+						ImagePoint p1 = new ImagePoint(associatedPoints.get(indices.get(i)+1));
+						ImagePoint p2 = new ImagePoint(associatedPoints.get(indices.get(i+1)));
+	
+						if (p1.squaredDistanceToPoint(p2) >= minLength2) {
+							p1.add(origin); p2.add(origin);
+							segments.add(new Line(p1.x, p1.y, p2.x, p2.y));
+						}
 					}
 				}
 				
@@ -246,7 +253,7 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 
 		// Run threads in parallel and reduce results
 		List<Line>   allSegments = new Vector<Line>();
-		ExecutorService executor = Executors.newWorkStealingPool();
+		ExecutorService executor = Executors.newWorkStealingPool(1);
 
 		try {
 			executor.invokeAll(tasks)
@@ -400,13 +407,14 @@ public class Extract_DNA_Fibers implements PlugInFilter {
 	 * The image space is defined to have origin at image center.
 	 * 
 	 * @param skeletons Input skeletons image (binary).
+	 * @param roi Input roi.
 	 * @param numberOfPoints Number of points to sample.
 	 * @return A list of Hough points
 	 */
-	public static List<HoughPoint> buildHoughSpaceFromSkeletons(ImagePlus skeletons, int numberOfPoints, int windowSize) {
+	public static List<HoughPoint> buildHoughSpaceFromSkeletons(ImagePlus skeletons, Roi roi, int numberOfPoints, int windowSize) {
 		// Setup list of foreground pixels' coordinates in coordinate system with origin centered.
 		ImagePoint origin = ImagePoint.getCenterPointOfImage(skeletons);
-		List<ImagePoint> foregroundPoints = ImagePoint.getImageForegroundPoints(skeletons, origin);
+		List<ImagePoint> foregroundPoints = ImagePoint.getImageForegroundPoints(skeletons, roi, origin);
 		
 		// Setup random generator
 		Random generator = new Random();

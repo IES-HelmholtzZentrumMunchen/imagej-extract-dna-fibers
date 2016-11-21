@@ -27,6 +27,7 @@ import java.util.concurrent.Executors;
 
 import ij.IJ;
 import ij.ImagePlus;
+import ij.gui.Roi;
 import ij.process.ImageProcessor;
 
 /**
@@ -343,10 +344,11 @@ public class ImagePoint extends Point2D {
 	/**
 	 * Get a list of point coordinates of foreground pixels in image.
 	 * @param image Input image.
+	 * @param roi Input roi.
 	 * @param origin Origin of the coordinate system.
 	 * @return A list of points coordinates.
 	 */
-	public static List<ImagePoint> getImageForegroundPoints(ImagePlus image, ImagePoint origin) {
+	public static List<ImagePoint> getImageForegroundPoints(ImagePlus image, Roi roi, ImagePoint origin) {
 		ImageProcessor processor = image.getProcessor();
 		
 		// Setup functions to be executed in parallel
@@ -357,7 +359,7 @@ public class ImagePoint extends Point2D {
 				ImagePoint p = new ImagePoint(x, y);
 				
 				tasks.add(() -> {
-					if (processor.get(p.x, p.y) > 0)
+					if (roi.contains(p.x, p.y) && processor.get(p.x, p.y) > 0)
 						return p.subtract(origin);
 					else
 						return null;

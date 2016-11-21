@@ -29,6 +29,7 @@ import org.junit.Test;
 import coordinates.*;
 import ij.ImagePlus;
 import ij.gui.NewImage;
+import ij.gui.Roi;
 import ij.process.ImageProcessor;
 
 
@@ -388,6 +389,7 @@ public class ImagePointTest {
 	public void testGetImageForegroundPoints() {
 		List<ImagePoint> list;
 		ImagePlus image = NewImage.createByteImage("", 5, 5, 1, NewImage.FILL_BLACK);
+		image.setRoi(0, 0, image.getWidth(), image.getHeight());
 		ImageProcessor processor = image.getProcessor();
 		
 		// Top-left origin
@@ -395,13 +397,13 @@ public class ImagePointTest {
 		
 		// No points
 		processor.setValue(0); processor.fill();
-		list = ImagePoint.getImageForegroundPoints(image, origin);
+		list = ImagePoint.getImageForegroundPoints(image, image.getRoi(), origin);
 		if (!list.isEmpty()) fail("exptected empty list, got something");
 		
 		// One point only
 		processor.setValue(0); processor.fill();
 		processor.set(2, 2, 1);
-		list = ImagePoint.getImageForegroundPoints(image, origin);
+		list = ImagePoint.getImageForegroundPoints(image, image.getRoi(), origin);
 		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
 		for (ImagePoint p : list) {
 			assertEquals(1, processor.get(p.x+origin.x, p.y+origin.y));
@@ -412,7 +414,7 @@ public class ImagePointTest {
 		processor.set(2, 2, 1);
 		processor.set(1, 2, 1);
 		processor.set(3, 2, 1);
-		list = ImagePoint.getImageForegroundPoints(image, origin);
+		list = ImagePoint.getImageForegroundPoints(image, image.getRoi(), origin);
 		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
 		for (ImagePoint p : list) {
 			assertEquals(1, processor.get(p.x+origin.x, p.y+origin.y));
@@ -420,10 +422,20 @@ public class ImagePointTest {
 		
 		// All points
 		processor.setValue(1); processor.fill();
-		list = ImagePoint.getImageForegroundPoints(image, origin);
+		list = ImagePoint.getImageForegroundPoints(image, image.getRoi(), origin);
 		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
 		for (ImagePoint p : list) {
 			assertEquals(1, processor.get(p.x+origin.x, p.y+origin.y));
+		}
+		
+		// All points with ROI
+		processor.setValue(1); processor.fill();
+		Roi roi = new Roi(origin.x, origin.y, 2, 1);
+		list = ImagePoint.getImageForegroundPoints(image, roi, origin);
+		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
+		for (ImagePoint p : list) {
+			assertEquals(1, processor.get(p.x+origin.x, p.y+origin.y));
+			assertTrue(roi.contains(p.x+origin.x, p.y+origin.y));
 		}
 		
 		// Image center origin
@@ -431,13 +443,13 @@ public class ImagePointTest {
 		
 		// No points
 		processor.setValue(0); processor.fill();
-		list = ImagePoint.getImageForegroundPoints(image, origin);
+		list = ImagePoint.getImageForegroundPoints(image, image.getRoi(), origin);
 		if (!list.isEmpty()) fail("exptected empty list, got something");
 		
 		// One point only
 		processor.setValue(0); processor.fill();
 		processor.set(2, 2, 1);
-		list = ImagePoint.getImageForegroundPoints(image, origin);
+		list = ImagePoint.getImageForegroundPoints(image, image.getRoi(), origin);
 		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
 		for (ImagePoint p : list) {
 			assertEquals(1, processor.get(p.x+origin.x, p.y+origin.y));
@@ -448,7 +460,7 @@ public class ImagePointTest {
 		processor.set(2, 2, 1);
 		processor.set(1, 2, 1);
 		processor.set(3, 2, 1);
-		list = ImagePoint.getImageForegroundPoints(image, origin);
+		list = ImagePoint.getImageForegroundPoints(image, image.getRoi(), origin);
 		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
 		for (ImagePoint p : list) {
 			assertEquals(1, processor.get(p.x+origin.x, p.y+origin.y));
@@ -456,10 +468,20 @@ public class ImagePointTest {
 		
 		// All points
 		processor.setValue(1); processor.fill();
-		list = ImagePoint.getImageForegroundPoints(image, origin);
+		list = ImagePoint.getImageForegroundPoints(image, image.getRoi(), origin);
 		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
 		for (ImagePoint p : list) {
 			assertEquals(1, processor.get(p.x+origin.x, p.y+origin.y));
+		}
+		
+		// All points with ROI
+		processor.setValue(1); processor.fill();
+		roi = new Roi(origin.x-1, origin.y+1, 1, 1);
+		list = ImagePoint.getImageForegroundPoints(image, roi, origin);
+		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
+		for (ImagePoint p : list) {
+			assertEquals(1, processor.get(p.x+origin.x, p.y+origin.y));
+			assertTrue(roi.contains(p.x+origin.x, p.y+origin.y));
 		}
 		
 		// Random origin
@@ -468,13 +490,13 @@ public class ImagePointTest {
 		
 		// No points
 		processor.setValue(0); processor.fill();
-		list = ImagePoint.getImageForegroundPoints(image, origin);
+		list = ImagePoint.getImageForegroundPoints(image, image.getRoi(), origin);
 		if (!list.isEmpty()) fail("exptected empty list, got something");
 		
 		// One point only
 		processor.setValue(0); processor.fill();
 		processor.set(2, 2, 1);
-		list = ImagePoint.getImageForegroundPoints(image, origin);
+		list = ImagePoint.getImageForegroundPoints(image, image.getRoi(), origin);
 		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
 		for (ImagePoint p : list) {
 			assertEquals(1, processor.get(p.x+origin.x, p.y+origin.y));
@@ -485,7 +507,7 @@ public class ImagePointTest {
 		processor.set(2, 2, 1);
 		processor.set(1, 2, 1);
 		processor.set(3, 2, 1);
-		list = ImagePoint.getImageForegroundPoints(image, origin);
+		list = ImagePoint.getImageForegroundPoints(image, image.getRoi(), origin);
 		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
 		for (ImagePoint p : list) {
 			assertEquals(1, processor.get(p.x+origin.x, p.y+origin.y));
@@ -493,10 +515,20 @@ public class ImagePointTest {
 		
 		// All points
 		processor.setValue(1); processor.fill();
-		list = ImagePoint.getImageForegroundPoints(image, origin);
+		list = ImagePoint.getImageForegroundPoints(image, image.getRoi(), origin);
 		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
 		for (ImagePoint p : list) {
 			assertEquals(1, processor.get(p.x+origin.x, p.y+origin.y));
+		}
+		
+		// All points with ROI
+		processor.setValue(1); processor.fill();
+		roi = new Roi(0, 0, 3, 3);
+		list = ImagePoint.getImageForegroundPoints(image, roi, origin);
+		if (list.isEmpty()) fail("exptected non-empty list, got nothing");
+		for (ImagePoint p : list) {
+			assertEquals(1, processor.get(p.x+origin.x, p.y+origin.y));
+			assertTrue(roi.contains(p.x+origin.x, p.y+origin.y));
 		}
 	}
 }
